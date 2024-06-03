@@ -1,27 +1,27 @@
-<?php 
+<?php
 
-require_once './models/usuario.php';
+require_once './models/mesa.php';
 
-class UsuarioController
+class MesaController
 {
-    public function RegistrarUsuario($request, $response, $args)
+    public function RegistrarMesa($request, $response, $args)
     {
         try 
         {
             $parametros = $request->getParsedBody();
     
-            $nuevoUsuario = new Usuario($parametros['username'], $parametros['pass'], $parametros['sector']);
-            $resultado = $nuevoUsuario->Registrar();
+            $nuevaMesa = new Mesa($parametros['codigo'], "Sin cliente");
+            $resultado = $nuevaMesa->Registrar();
     
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario creado con éxito"));
+                $payload = json_encode(array("mensaje" => "Mesa creada con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             } 
             else 
             {
-                throw new Exception("Ha surgido un error al crear el usuario");
+                throw new Exception("Ha surgido un error al crear la mesa");
             }
         } 
         catch (Exception $e) 
@@ -32,41 +32,40 @@ class UsuarioController
         }
     }
 
-    public function ObtenerTodosLosUsuarios($request, $response, $args)
+    public function ObtenerTodasLasMesas($request, $response, $args)
     {
-        $lista = Usuario::ObtenerTodos();
-        $payload = json_encode(array("listaUsuarios" => $lista));
+        $lista = Mesa::ObtenerTodos();
+        $payload = json_encode(array("listaMesas" => $lista));
 
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    public function ObtenerUsuario($request, $response, $args)
+    public function ObtenerMesa($request, $response, $args)
     {
-        $usuario = Usuario::ObtenerUno($args['username']);
-        $payload = json_encode($usuario);
+        $mesa = Mesa::ObtenerUno($args['codigo']);
+        $payload = json_encode($mesa);
 
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    public function ModificarUsuario($request, $response, $args)
+    public function ActualizarEstadoMesa($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-            $modificacionNuevoUsuario = new Usuario($parametros['username'], $parametros['pass'], $parametros['sector']);
-            $resultado = $modificacionNuevoUsuario->Modificar($parametros['usernameOriginal']);
+            $resultado = Mesa::ActualizarEstado($parametros['codigo'], $parametros['estado']);
 
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario modificado con éxito"));
+                $payload = json_encode(array("mensaje" => "Estado actualizado con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             } 
             else 
             {
-                throw new Exception("Error en la modificacion");
+                throw new Exception("Ha surgido un error al actualizar el estado de la mesa");
             }
         }
         catch (Exception $e) 
@@ -77,22 +76,22 @@ class UsuarioController
         }
     }
 
-    public function BorrarUsuario($request, $response, $args)
+    public function BorrarMesa($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-            $resultado = Usuario::Borrar($parametros['username']);
+            $resultado = Mesa::Borrar($parametros['codigo']);
 
             if ($resultado)
             {
-                $payload = json_encode(array("mensaje" => "Usuario borrado con éxito"));
+                $payload = json_encode(array("mensaje" => "Mesa borrada con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             }
             else
             {
-                throw new Exception("Error al borrar el usuario");
+                throw new Exception("Ha surgido un error al borrar la mesa");
             }
         }
         catch (Exception $e) 

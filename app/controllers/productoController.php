@@ -1,27 +1,27 @@
-<?php 
+<?php
 
-require_once './models/usuario.php';
+require_once './models/producto.php';
 
-class UsuarioController
+class ProductoController
 {
-    public function RegistrarUsuario($request, $response, $args)
+    public function RegistrarProducto($request, $response, $args)
     {
         try 
         {
             $parametros = $request->getParsedBody();
     
-            $nuevoUsuario = new Usuario($parametros['username'], $parametros['pass'], $parametros['sector']);
-            $resultado = $nuevoUsuario->Registrar();
+            $nuevoProducto = new Producto($parametros['tipo'], $parametros['nombre'], $parametros['precio'], $parametros['codigo']);
+            $resultado = $nuevoProducto->Registrar();
     
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario creado con éxito"));
+                $payload = json_encode(array("mensaje" => "Producto creado con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             } 
             else 
             {
-                throw new Exception("Ha surgido un error al crear el usuario");
+                throw new Exception("Ha surgido un error al crear el producto");
             }
         } 
         catch (Exception $e) 
@@ -32,41 +32,40 @@ class UsuarioController
         }
     }
 
-    public function ObtenerTodosLosUsuarios($request, $response, $args)
+    public function ObtenerTodosLosProductos($request, $response, $args)
     {
-        $lista = Usuario::ObtenerTodos();
-        $payload = json_encode(array("listaUsuarios" => $lista));
+        $lista = Producto::ObtenerTodos();
+        $payload = json_encode(array("listaProductos" => $lista));
 
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    public function ObtenerUsuario($request, $response, $args)
+    public function ObtenerProducto($request, $response, $args)
     {
-        $usuario = Usuario::ObtenerUno($args['username']);
-        $payload = json_encode($usuario);
+        $producto = Producto::ObtenerUno($args['codigo']);
+        $payload = json_encode($producto);
 
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    public function ModificarUsuario($request, $response, $args)
+    public function ActualizarPrecioProducto($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-            $modificacionNuevoUsuario = new Usuario($parametros['username'], $parametros['pass'], $parametros['sector']);
-            $resultado = $modificacionNuevoUsuario->Modificar($parametros['usernameOriginal']);
+            $resultado = Producto::ActualizarPrecio($parametros['codigo'], $parametros['precio']);
 
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario modificado con éxito"));
+                $payload = json_encode(array("mensaje" => "Precio actualizado con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             } 
             else 
             {
-                throw new Exception("Error en la modificacion");
+                throw new Exception("Ha surgido un error al actualizar del precio");
             }
         }
         catch (Exception $e) 
@@ -77,22 +76,22 @@ class UsuarioController
         }
     }
 
-    public function BorrarUsuario($request, $response, $args)
+    public function BorrarProducto($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-            $resultado = Usuario::Borrar($parametros['username']);
+            $resultado = Producto::Borrar($parametros['codigo']);
 
             if ($resultado)
             {
-                $payload = json_encode(array("mensaje" => "Usuario borrado con éxito"));
+                $payload = json_encode(array("mensaje" => "Producto borrado con éxito"));
                 $response->getBody()->write($payload);
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
             }
             else
             {
-                throw new Exception("Error al borrar el usuario");
+                throw new Exception("Ha surgido un error al borrar de el producto");
             }
         }
         catch (Exception $e) 
