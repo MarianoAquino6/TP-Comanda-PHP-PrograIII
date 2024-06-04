@@ -1,5 +1,7 @@
 <?php
 
+//BORRAR ESTO
+
 class Logger
 {
     public static function LogOperacion($request, $response, $next)

@@ -10,7 +10,7 @@ class MesaController
         {
             $parametros = $request->getParsedBody();
     
-            $nuevaMesa = new Mesa($parametros['codigo'], "Sin cliente");
+            $nuevaMesa = new Mesa($parametros['codigo'], "Cerrada");
             $resultado = $nuevaMesa->Registrar();
     
             if ($resultado) 

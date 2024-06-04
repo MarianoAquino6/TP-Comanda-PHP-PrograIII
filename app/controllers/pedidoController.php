@@ -16,26 +16,21 @@ class PedidoController
             $parametros = $request->getParsedBody();
             
             $idMesa = Mesa::ObtenerUno($parametros['codigoMesa'])['id'];
-            $idMozo = Usuario::ObtenerUno($parametros['mozo'])['id'];
+            $idMozo = Usuario::ObtenerUno($parametros['username'])['id'];
 
-            $nuevoPedido = new Pedido($idMesa, $parametros['codigoPedido'], $parametros['nombreCliente'], "Pedido tomado por el mozo", $parametros['fotoMesa']);
+            $nuevoPedido = new Pedido($idMesa, $idMozo, $parametros['codigoPedido'], $parametros['nombreCliente'], $parametros['fotoMesa']);
             $resultadoPedido = $nuevoPedido->Registrar();
 
             $idPedido = Pedido::ObtenerUno($parametros['codigoPedido'])['id'];
-            $nuevaAsignacion = new AsignacionPedido($idMozo, $idPedido);
-            $resultadoAsignacion = $nuevaAsignacion->Registrar();
 
             foreach ($parametros['productos'] as $producto) 
             {
                 $idProducto = Producto::ObtenerUno($producto['codigo'])['id'];
-                $pedidoProducto = new PedidoProducto($idPedido, $idProducto, $producto['cantidad']);
+                $pedidoProducto = new PedidoProducto($idPedido, $idProducto, "Pendiente");
                 $pedidoProducto->Registrar();
             }
-
-            $importeTotal = PedidoProducto::ObtenerImporteTotal($idPedido);
-            $resultadoActualizacion = $nuevoPedido->ActualizarImporteTotal($importeTotal);
     
-            if ($resultadoPedido && $resultadoAsignacion && $resultadoActualizacion) 
+            if ($resultadoPedido) 
             {
                 $payload = json_encode(array("mensaje" => "Pedido creado con éxito"));
                 $response->getBody()->write($payload);
@@ -72,32 +67,6 @@ class PedidoController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    public function ActualizarEstadoPedido($request, $response, $args)
-    {
-        try
-        {
-            $parametros = $request->getParsedBody();
-            $resultado = Pedido::ActualizarEstado($parametros['codigo'], $parametros['estado']);
-
-            if ($resultado) 
-            {
-                $payload = json_encode(array("mensaje" => "Estado actualizado con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al actualizar el estado del pedido");
-            }
-        }
-        catch (Exception $e) 
-        {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
     public function BorrarPedido($request, $response, $args)
     {
         try
@@ -114,6 +83,69 @@ class PedidoController
             else
             {
                 throw new Exception("Ha surgido un error al borrar el pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            $payload = json_encode(array("mensaje" => $e->getMessage()));
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    public function DefinirImporteTotal($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+
+            $idPedido = Pedido::ObtenerUno($parametros['codigoPedido'])['id'];
+
+            $importeTotal = PedidoProducto::ObtenerImporteTotal($idPedido)['importe_total'];
+            $resultado = Pedido::ActualizarImporteTotal($parametros['codigoPedido'], $importeTotal);
+
+            if ($resultado) 
+            {
+                $payload = json_encode(array("mensaje" => "Importe total actualizado con éxito"));
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al actualizar el importe total del pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            $payload = json_encode(array("mensaje" => $e->getMessage()));
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    public function TomarPedido($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+
+            $idEmpleado = Usuario::ObtenerUno($parametros['username'])['id'];
+            $idPedido = Pedido::ObtenerUno($parametros['codigoPedido'])['id'];
+            $idProducto = Producto::ObtenerUno($parametros['codigo'])['id'];
+
+            $idProductoTomado = PedidoProducto::ObtenerProductoDisponible($idPedido, $idProducto)['id'];
+
+            $resultado = PedidoProducto::TomarPedido($idProductoTomado, $idEmpleado, $parametros['tiempo_estimado']);
+
+            if ($resultado) 
+            {
+                $payload = json_encode(array("mensaje" => "Pedito tomado con éxito"));
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al tomar el pedido");
             }
         }
         catch (Exception $e) 
