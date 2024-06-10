@@ -4,9 +4,16 @@ require_once './models/usuario.php';
 
 class UsuarioController
 {
+    private function CrearRespuesta($response, $data, $status = 200)
+    {
+        $payload = json_encode($data);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    }
+
     public function RegistrarUsuario($request, $response, $args)
     {
-        try 
+        try
         {
             $parametros = $request->getParsedBody();
     
@@ -15,9 +22,7 @@ class UsuarioController
     
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario creado con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario creado con éxito"]);
             } 
             else 
             {
@@ -26,28 +31,21 @@ class UsuarioController
         } 
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
         }
     }
 
     public function ObtenerTodosLosUsuarios($request, $response, $args)
     {
-        $lista = Usuario::ObtenerTodos();
-        $payload = json_encode(array("listaUsuarios" => $lista));
-
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    }
-
-    public function ObtenerUsuario($request, $response, $args)
-    {
-        $usuario = Usuario::ObtenerUno($args['username']);
-        $payload = json_encode($usuario);
-
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        try
+        {
+            $lista = Usuario::ObtenerTodos();
+            return $this->CrearRespuesta($response, ["listaUsuarios" => $lista]);
+        }
+        catch (Exception $e)
+        {
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
+        }
     }
 
     public function ModificarUsuario($request, $response, $args)
@@ -55,25 +53,22 @@ class UsuarioController
         try
         {
             $parametros = $request->getParsedBody();
+    
             $modificacionNuevoUsuario = new Usuario($parametros['username'], $parametros['pass'], $parametros['sector']);
             $resultado = $modificacionNuevoUsuario->Modificar($parametros['usernameOriginal']);
 
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Usuario modificado con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario modificado con éxito"]);
             } 
             else 
             {
-                throw new Exception("Error en la modificacion");
+                throw new Exception("Error en la modificación");
             }
         }
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
         }
     }
 
@@ -82,13 +77,12 @@ class UsuarioController
         try
         {
             $parametros = $request->getParsedBody();
+
             $resultado = Usuario::Borrar($parametros['username']);
 
             if ($resultado)
             {
-                $payload = json_encode(array("mensaje" => "Usuario borrado con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario borrado con éxito"]);
             }
             else
             {
@@ -97,9 +91,7 @@ class UsuarioController
         }
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
         }
     }
 }

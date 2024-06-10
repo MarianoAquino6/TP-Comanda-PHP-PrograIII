@@ -16,8 +16,18 @@ require __DIR__ . '/../vendor/autoload.php';
 
 //REQUIRES
 require_once './db/AccesoDatos.php';
-// require_once './middlewares/Logger.php';
+require_once './controllers/mesaController.php';
+require_once './controllers/pedidoController.php';
+require_once './controllers/productoController.php';
+require_once './controllers/reseñaController.php';
 require_once './controllers/usuarioController.php';
+require_once './middleware/loggerMW.php';
+require_once './middleware/permisosMW.php';
+require_once './middleware/validadorMesasMW.php';
+require_once './middleware/validadorPedidosMW.php';
+require_once './middleware/validadorProductosMW.php';
+require_once './middleware/validadorUsuariosMW.php';
+require_once './middleware/validadorReseñasMW.php';
 
 // Load ENV
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -36,38 +46,107 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 // Routes
 $app->group('/usuarios', function (RouteCollectorProxy $group) 
 {
-    $group->get('[/]', \UsuarioController::class . ':ObtenerTodosLosUsuarios');
-    $group->get('/{usuario}', \UsuarioController::class . ':ObtenerUsuario');
-    $group->post('[/]', \UsuarioController::class . ':RegistrarUsuario');
-    $group->put('[/]', \UsuarioController::class . ':ModificarUsuario');
-    $group->delete('[/]', \UsuarioController::class . ':BorrarUsuario');
+    $group->get('[/]', \UsuarioController::class . ':ObtenerTodosLosUsuarios')
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->post('/registrar', \UsuarioController::class . ':RegistrarUsuario')
+    ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Registro))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->put('/modificar', \UsuarioController::class . ':ModificarUsuario')
+    ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Modificacion))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->delete('/borrar', \UsuarioController::class . ':BorrarUsuario')
+    ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Borrado))
+    ->add(new PermisosMW(["ADMIN"]));
+});
+
+$app->group('/mesas', function (RouteCollectorProxy $group) 
+{
+    $group->get('[/]', \MesaController::class . ':ObtenerTodasLasMesasConEstados');
+
+    $group->get('/mas-usada', \MesaController::class . ':ObtenerMesaMasUsada')
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->post('/registrar', \MesaController::class . ':RegistrarMesa')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::RegistroBorradoCerrar))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->put('/actualizar-estado', \MesaController::class . ':ActualizarEstadoMesa')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::ActualizarEstado))
+    ->add(new PermisosMW(["MOZO"]));
+
+    $group->put('/cerrar', \MesaController::class . ':CerrarMesa')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::RegistroBorradoCerrar))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->delete('/borrar', \MesaController::class . ':BorrarMesa')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::RegistroBorradoCerrar))
+    ->add(new PermisosMW(["ADMIN"]));
 });
 
 $app->group('/productos', function (RouteCollectorProxy $group) 
 {
     $group->get('[/]', \ProductoController::class . ':ObtenerTodosLosProductos');
-    $group->get('/{producto}', \ProductoController::class . ':ObtenerProducto');
-    $group->post('[/]', \ProductoController::class . ':RegistrarProducto');
-    $group->put('[/]', \ProductoController::class . ':ActualizarPrecioProducto');
-    $group->delete('[/]', \ProductoController::class . ':BorrarProducto');
+
+    $group->post('/registrar', \ProductoController::class . ':RegistrarProducto')
+    ->add(new ValidadorProductosMW(ModoValidacionProductos::Registro))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->put('/actualizar-precio', \ProductoController::class . ':ActualizarPrecioProducto')
+    ->add(new ValidadorProductosMW(ModoValidacionProductos::ActualizacionPrecio))
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->delete('/borrar', \ProductoController::class . ':BorrarProducto')
+    ->add(new ValidadorProductosMW(ModoValidacionProductos::Borrado))
+    ->add(new PermisosMW(["ADMIN"]));
+
 });
 
-$app->group('/mesas', function (RouteCollectorProxy $group) 
+$app->group('/pedidos', function (RouteCollectorProxy $group) 
 {
-    $group->get('[/]', \MesaController::class . ':ObtenerTodasLasMesas');
-    $group->get('/{mesa}', \MesaController::class . ':ObtenerMesa');
-    $group->post('[/]', \MesaController::class . ':RegistrarMesa');
-    $group->put('[/]', \MesaController::class . ':ActualizarEstadoMesa');
-    $group->delete('[/]', \MesaController::class . ':BorrarMesa');
+    $group->get('[/]', \PedidoController::class . ':ObtenerTodosPedidosConEstados')
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->get('/tiempo-restante', \PedidoController::class . ':ObtenerTiempoRestante');
+
+    $group->post('/registrar', \PedidoController::class . ':RegistrarPedidoYActualizarMesa')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::Registro))
+    ->add(new PermisosMW(["MOZO"]));
+
+    $group->post('/obtener-pendientes', \PedidoController::class . ':ObtenerPedidosPendientesSegunSector')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::ObtenerRegistros))
+    ->add(new PermisosMW(["CERVECERO", "BARTENDER", "COCINERO"]));
+
+    $group->post('/obtener-pedidos-tomados', \PedidoController::class . ':ObtenerPedidosTomadosMozo')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::ObtenerRegistros))
+    ->add(new PermisosMW(["MOZO"]));
+
+    $group->post('/obtener-pedidos-listos', \PedidoController::class . ':ObtenerPedidosListosMozo')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::ObtenerRegistros))
+    ->add(new PermisosMW(["MOZO"]));
+
+    $group->put('/tomar', \PedidoController::class . ':TomarPedido')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::TomarPedido))
+    ->add(new PermisosMW(["CERVECERO", "BARTENDER", "COCINERO"]));
+
+    $group->put('/terminar', \PedidoController::class . ':TerminarPedido')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::TerminarPedido))
+    ->add(new PermisosMW(["CERVECERO", "BARTENDER", "COCINERO"]));
+
+    $group->put('/cobrar', \PedidoController::class . ':CobrarMesa')
+    ->add(new ValidadorPedidosMW(ModoValidacionPedidos::Cobrar))
+    ->add(new PermisosMW(["MOZO"]));
 });
 
-$app->group('/pedido', function (RouteCollectorProxy $group) 
+$app->group('/reseñas', function (RouteCollectorProxy $group) 
 {
-    $group->get('[/]', \PedidoController::class . ':ObtenerTodosLosPedidos');
-    $group->get('/{pedido}', \PedidoController::class . ':ObtenerPedido');
-    $group->post('[/]', \PedidoController::class . ':RegistrarPedido');
-    $group->put('[/]', \PedidoController::class . ':ActualizarEstadoPedido');
-    $group->delete('[/]', \PedidoController::class . ':BorrarPedido');
+    $group->get('/top', \ReseñaController::class . ':ObtenerMejoresComentariosMesas')
+    ->add(new PermisosMW(["ADMIN"]));
+
+    $group->post('/registrar', \ProductoController::class . ':RegistrarReseña')
+    ->add(new ValidadorReseñasMW(ModoValidacionReseñas::Registro));
 });
 
 $app->get('[/]', function (Request $request, Response $response) 

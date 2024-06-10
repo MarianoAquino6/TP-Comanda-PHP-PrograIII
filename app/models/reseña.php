@@ -37,11 +37,24 @@ class Reseña
         $queryPreparada->bindParam(':puntuacion_mesa', $this->_puntuacionMesa, PDO::PARAM_INT);
         $queryPreparada->bindParam(':id_mozo', $this->_idMozo, PDO::PARAM_INT);
         $queryPreparada->bindParam(':puntuacion_mozo', $this->_puntuacionMozo, PDO::PARAM_INT);
-        $queryPreparada->bindParam(':id_cocinero', $this->_idCocinero, PDO::PARAM_INT);
+        $queryPreparada->bindParam(':id_cocinero', $this->_idCocinero, PDO::PARAM_STR);
         $queryPreparada->bindParam(':puntuacion_cocinero', $this->_puntuacionCocinero, PDO::PARAM_INT);
         $queryPreparada->bindParam(':puntuacion_restaurante', $this->_puntuacionRestaurante, PDO::PARAM_INT);
         $queryPreparada->bindParam(':experiencia', $this->_experiencia, PDO::PARAM_STR);
 
         return $queryPreparada->execute();
+    }
+
+    public static function ObtenerMejoresComentarios()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT experiencia FROM pedidos 
+                    ORDER BY puntuacion_mesa DESC 
+                    LIMIT 10";
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+    
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
     }
 }

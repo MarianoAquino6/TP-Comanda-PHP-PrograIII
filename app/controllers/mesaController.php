@@ -1,9 +1,17 @@
 <?php
 
 require_once './models/mesa.php';
+require_once './models/pedido.php';
 
 class MesaController
 {
+    private function CrearRespuesta($response, $data, $status = 200)
+    {
+        $payload = json_encode($data);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    }
+
     public function RegistrarMesa($request, $response, $args)
     {
         try 
@@ -15,9 +23,7 @@ class MesaController
     
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Mesa creada con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa creada con éxito"));
             } 
             else 
             {
@@ -26,28 +32,8 @@ class MesaController
         } 
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
-    }
-
-    public function ObtenerTodasLasMesas($request, $response, $args)
-    {
-        $lista = Mesa::ObtenerTodos();
-        $payload = json_encode(array("listaMesas" => $lista));
-
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    }
-
-    public function ObtenerMesa($request, $response, $args)
-    {
-        $mesa = Mesa::ObtenerUno($args['codigo']);
-        $payload = json_encode($mesa);
-
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
     public function ActualizarEstadoMesa($request, $response, $args)
@@ -55,13 +41,12 @@ class MesaController
         try
         {
             $parametros = $request->getParsedBody();
-            $resultado = Mesa::ActualizarEstado($parametros['codigo'], $parametros['estado']);
+            $mesaAActualizar = Mesa::ObtenerUno($parametros['codigo']);
+            $resultado = $mesaAActualizar->ActualizarEstado($parametros['estado']);
 
             if ($resultado) 
             {
-                $payload = json_encode(array("mensaje" => "Estado actualizado con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, array("mensaje" => "Estado actualizado con éxito"));
             } 
             else 
             {
@@ -70,9 +55,32 @@ class MesaController
         }
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function CerrarMesa($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+            $mesaAActualizar = Mesa::ObtenerUno($parametros['codigo']);
+            $resultado = $mesaAActualizar->ActualizarEstado("Cerrada");
+
+            Pedido::Borrar($mesaAActualizar->GetId());
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa cerrada con éxito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al cerrar la mesa");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
     }
 
@@ -85,9 +93,7 @@ class MesaController
 
             if ($resultado)
             {
-                $payload = json_encode(array("mensaje" => "Mesa borrada con éxito"));
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa borrada con éxito"));
             }
             else
             {
@@ -96,9 +102,33 @@ class MesaController
         }
         catch (Exception $e) 
         {
-            $payload = json_encode(array("mensaje" => $e->getMessage()));
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerTodasLasMesasConEstados($request, $response, $args)
+    {
+        try 
+        {
+            $lista = Mesa::ObtenerListadoMesasConEstados();
+            return $this->CrearRespuesta($response, array("listaMesasConEstados" => $lista));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMasUsada($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMasUsada();
+            return $this->CrearRespuesta($response, array("mesaMasUsada" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
     }
 }
