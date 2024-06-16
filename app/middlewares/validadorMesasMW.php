@@ -8,7 +8,8 @@ require_once './models/mesa.php';
 enum ModoValidacionMesas
 {
     case ActualizarEstado;
-    case RegistroBorradoCerrar;
+    case Registro;
+    case BorradoCerrar;
 }
 
 class ValidadorMesasMW
@@ -31,8 +32,11 @@ class ValidadorMesasMW
                 case ModoValidacionMesas::ActualizarEstado:
                     $this->validarParametrosActualizarEstado($parametros);
                     break;
-                case ModoValidacionMesas::RegistroBorradoCerrar:
-                    $this->validarParametrosRegistroBorradoCerrar($parametros);
+                case ModoValidacionMesas::Registro:
+                    $this->validarParametrosRegistro($parametros);
+                    break;
+                case ModoValidacionMesas::BorradoCerrar:
+                    $this->validarParametrosBorradoCerrar($parametros);
                     break;
             }
 
@@ -66,7 +70,20 @@ class ValidadorMesasMW
         }
     }
 
-    private function validarParametrosRegistroBorradoCerrar($parametros)
+    private function validarParametrosRegistro($parametros)
+    {
+        if (!isset($parametros['codigo']))
+        {
+            throw new Exception('Complete los parametros necesarios');
+        }
+
+        if (Mesa::MesaExiste($parametros['codigo']))
+        {
+            throw new Exception('La mesa indicada ya existe');
+        }
+    }
+
+    private function validarParametrosBorradoCerrar($parametros)
     {
         if (!isset($parametros['codigo']))
         {

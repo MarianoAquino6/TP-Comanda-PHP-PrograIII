@@ -29,7 +29,7 @@ class Reseña
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "INSERT INTO 
-                    pedidos (id_mesa, puntuacion_mesa, id_mozo, puntuacion_mozo, id_cocinero, puntuacion_cocinero, puntuacion_restaurante, experiencia)
+                    reseñas (id_mesa, puntuacion_mesa, id_mozo, puntuacion_mozo, id_cocinero, puntuacion_cocinero, puntuacion_restaurante, experiencia)
                     VALUES (:id_mesa, :puntuacion_mesa, :id_mozo, :puntuacion_mozo, :id_cocinero, :puntuacion_cocinero, :puntuacion_restaurante, :experiencia)";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
@@ -49,7 +49,7 @@ class Reseña
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT experiencia FROM pedidos 
+        $query = "SELECT experiencia FROM reseñas 
                     ORDER BY puntuacion_mesa DESC 
                     LIMIT 10";
         $queryPreparada = $acceso->PrepararConsulta($query);

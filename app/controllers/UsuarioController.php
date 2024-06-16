@@ -22,7 +22,7 @@ class UsuarioController
     
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, ["mensaje" => "Usuario creado con éxito"]);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario creado con exito"]);
             } 
             else 
             {
@@ -59,7 +59,7 @@ class UsuarioController
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, ["mensaje" => "Usuario modificado con éxito"]);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario modificado con exito"]);
             } 
             else 
             {
@@ -82,7 +82,7 @@ class UsuarioController
 
             if ($resultado)
             {
-                return $this->CrearRespuesta($response, ["mensaje" => "Usuario borrado con éxito"]);
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario borrado con exito"]);
             }
             else
             {

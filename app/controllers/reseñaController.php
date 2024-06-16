@@ -32,7 +32,7 @@ class ReseñaController
     
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Reseña guardada con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Resenia guardada con exito"));
             } 
             else 
             {

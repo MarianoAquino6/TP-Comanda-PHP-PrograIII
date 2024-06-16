@@ -49,8 +49,17 @@ class PedidoProducto
         $queryPreparada->bindParam(':id_pedido', $idPedido, PDO::PARAM_INT);
 
         $queryPreparada->execute();
-    
-        return $queryPreparada->fetch(PDO::FETCH_CLASS, 'PedidoProducto');
+
+        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila) 
+        {
+            return new PedidoProducto($fila['id_pedido'], $fila['id_producto'], $fila['estado'], $fila['id']);
+        } 
+        else 
+        {
+            return null;
+        }
     }
 
     public static function ObtenerPedidoProductoEnPreparacion($idPedido, $idProducto, $idEmpleado)
@@ -58,7 +67,7 @@ class PedidoProducto
         $acceso = AccesoDatos::ObtenerInstancia();
     
         $query = "SELECT id_pedido, id_producto, estado, id FROM pedidos_productos 
-                    WHERE id_producto = :id_producto AND id_pedido = :id_pedido AND id_empleado = :id_empleado 
+                    WHERE id_producto = :id_producto AND id_pedido = :id_pedido AND id_usuario = :id_empleado 
                     AND estado = 'En Preparación' 
                     LIMIT 1";
         $queryPreparada = $acceso->PrepararConsulta($query);
@@ -68,8 +77,17 @@ class PedidoProducto
         $queryPreparada->bindParam(':id_empleado', $idEmpleado, PDO::PARAM_INT);
 
         $queryPreparada->execute();
-    
-        return $queryPreparada->fetch(PDO::FETCH_CLASS, 'PedidoProducto');
+
+        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila) 
+        {
+            return new PedidoProducto($fila['id_pedido'], $fila['id_producto'], $fila['estado'], $fila['id']);
+        } 
+        else 
+        {
+            return null;
+        }
     }
 
     public function TomarPedido($idEmpleado, $tiempoEstimado)
@@ -112,12 +130,19 @@ class PedidoProducto
     {
         $acceso = AccesoDatos::ObtenerInstancia();
     
-        $query = "SELECT me.codigo, us.username, pe.codigo, pe.nombre_cliente, pr.nombre FROM pedidos_productos pp
-                    INNER JOIN productos pr ON pp.id_producto = p.id
-                    INNER JOIN pedidos pe ON pp.id_pedido = pe.id
-                    INNER JOIN mesas me ON pe.id_mesa = me.id
-                    INNER JOIN usuarios us ON pe.id_mozo = us.id
-                    WHERE pr.tipo = :tipo AND pp.estado = 'Pendiente'";
+        $query = "SELECT 
+                    me.codigo AS mesa_codigo, 
+                    us.username AS mozo_username, 
+                    pe.codigo AS pedido_codigo, 
+                    pe.nombre_cliente, 
+                    pr.nombre AS producto_nombre, 
+                    pr.codigo AS producto_codigo 
+                FROM pedidos_productos pp
+                INNER JOIN productos pr ON pp.id_producto = pr.id
+                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                INNER JOIN mesas me ON pe.id_mesa = me.id
+                INNER JOIN usuarios us ON pe.id_mozo = us.id
+                WHERE pr.tipo = :tipo AND pp.estado = 'Pendiente'";
         
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':tipo', $tipoProducto, PDO::PARAM_STR);
@@ -134,7 +159,7 @@ class PedidoProducto
                     INNER JOIN productos pr ON pp.id_producto = pr.id
                     INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                     INNER JOIN mesas me ON pe.id_mesa = me.id
-                    WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pe.importe_total = null";
+                    WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pe.is_deleted = 0";
         
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':id_mozo', $idMozo, PDO::PARAM_INT);
@@ -168,7 +193,7 @@ class PedidoProducto
                     INNER JOIN productos pr ON pp.id_producto = pr.id
                     INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                     INNER JOIN mesas me ON pe.id_mesa = me.id
-                    WHERE me.estado != 'Cerrada' AND NOT pe.is_deleted";
+                    WHERE me.estado != 'Cerrada' AND pe.is_deleted = 0";
         
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->execute();

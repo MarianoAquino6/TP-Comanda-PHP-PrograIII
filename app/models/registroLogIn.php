@@ -18,7 +18,7 @@ class RegistroLogIn
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT sector FROM usuarios WHERE username = :username AND NOT is_deleted";
+        $query = "SELECT sector FROM usuarios WHERE username = :username AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':username', $this->_username, PDO::PARAM_STR);

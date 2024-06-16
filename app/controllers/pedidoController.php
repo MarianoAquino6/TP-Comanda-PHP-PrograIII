@@ -1,7 +1,6 @@
 <?php 
 
 require_once './models/pedido.php';
-require_once './models/asignacionPedido.php';
 require_once './models/pedidoProducto.php';
 require_once './models/mesa.php';
 require_once './models/usuario.php';
@@ -26,24 +25,24 @@ class PedidoController
             $mozo = Usuario::ObtenerUno($parametros['username']);
             $codigoPedido = substr(bin2hex(random_bytes(6)), 0, 6);
 
-            $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente'], $parametros['fotoMesa']);
+            $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente']);
             $idPedido = $nuevoPedido->RegistrarYDevolverId();
 
             foreach ($parametros['productos'] as $producto) 
             {
-                $producto = Producto::ObtenerUno($producto['codigo']);
+                $objetoProducto = Producto::ObtenerUno($producto['codigo']);
                 $cantidad = $producto['cantidad'];
 
                 for ($i = 0; $i < $cantidad; $i++) 
                 {
-                    $pedidoProducto = new PedidoProducto($idPedido, $producto->GetId(), "Pendiente");
+                    $pedidoProducto = new PedidoProducto($idPedido, $objetoProducto->GetId(), "Pendiente");
                     $pedidoProducto->Registrar();
                 }
             }
     
             if ($idPedido != false) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido creado con éxito, el codigo es". $nuevoPedido->GetCodigo()));
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido creado con exito, el codigo es ". $nuevoPedido->GetCodigo()));
             }
             else
             {
@@ -77,11 +76,11 @@ class PedidoController
             $producto = Producto::ObtenerUno($parametros['codigoProducto']);
             $pedidoProductoDisponible = PedidoProducto::ObtenerPedidoProductoDisponible($pedido->GetId(), $producto->GetId());
 
-            $resultado = $pedidoProductoDisponible->TomarPedido($empleado->GetId(), $parametros['tiempo_estimado']);
+            $resultado = $pedidoProductoDisponible->TomarPedido($empleado->GetId(), $parametros['tiempoEstimado']);
 
             if ($resultado)
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido tomado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido tomado con exito"));
             } 
             else 
             {
@@ -109,7 +108,7 @@ class PedidoController
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido terminado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido terminado con exito"));
             } 
             else 
             {
@@ -126,7 +125,7 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getParsedBody();
+            $parametros = $request->getQueryParams();
 
             $usuario = Usuario::ObtenerUno($parametros['username']);
             $pedidosDisponibles = null;
@@ -139,7 +138,7 @@ class PedidoController
                 case "BARTENDER":
                     $pedidosDisponibles = PedidoProducto::ObtenerPedidosDisponiblesSegunTipo("TRAGO");
                     break;
-                case "CERVECEROS":
+                case "CERVECERO":
                     $pedidosDisponibles = PedidoProducto::ObtenerPedidosDisponiblesSegunTipo("CERVEZA");
                     break;
                 default:
@@ -158,7 +157,7 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getParsedBody();
+            $parametros = $request->getQueryParams();
 
             $usuario = Usuario::ObtenerUno($parametros['username']);
             $pedidosTomados = PedidoProducto::ObtenerPedidosTomadosMozo($usuario->GetId());
@@ -175,7 +174,7 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getParsedBody();
+            $parametros = $request->getQueryParams();
 
             $usuario = Usuario::ObtenerUno($parametros['username']);
             $pedidosListos = PedidoProducto::ObtenerPedidosListosMozo($usuario->GetId());
@@ -212,7 +211,7 @@ class PedidoController
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Importe total actualizado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Importe total actualizado con exito"));
             } 
             else 
             {
@@ -227,8 +226,10 @@ class PedidoController
 
     public function ObtenerTiempoRestante($request, $response, $args)
     {
-        $codigoMesa = $args['codigoMesa'];
-        $codigoPedido = $args['codigoPedido'];
+        $parametros = $request->getQueryParams();
+
+        $codigoMesa = $parametros['codigoMesa'];
+        $codigoPedido = $parametros['codigoPedido'];
         $tiempoRestante = Pedido::ObtenerTiempoRestante($codigoMesa, $codigoPedido);
 
         return $this->CrearRespuesta($response, array("mensaje" => "El tiempo restante es de " . $tiempoRestante. " minutos"));

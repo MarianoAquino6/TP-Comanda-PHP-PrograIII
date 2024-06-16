@@ -82,6 +82,11 @@ class ValidadorUsuariosMW
             throw new Exception('La contraseña no es valida o el sector no es válido');
         }
 
+        if (!Usuario::UsuarioExiste($parametros['usernameOriginal']))
+        {
+            throw new Exception('El usernameOriginal no existe');
+        }
+
         if (Usuario::UsuarioExiste($parametros['username']))
         {
             throw new Exception('El username ya existe');

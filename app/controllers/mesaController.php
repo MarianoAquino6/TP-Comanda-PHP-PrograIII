@@ -23,7 +23,7 @@ class MesaController
     
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Mesa creada con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa creada con exito"));
             } 
             else 
             {
@@ -46,7 +46,7 @@ class MesaController
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Estado actualizado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Estado actualizado con exito"));
             } 
             else 
             {
@@ -67,11 +67,11 @@ class MesaController
             $mesaAActualizar = Mesa::ObtenerUno($parametros['codigo']);
             $resultado = $mesaAActualizar->ActualizarEstado("Cerrada");
 
-            Pedido::Borrar($mesaAActualizar->GetId());
+            // Pedido::Borrar($mesaAActualizar->GetId());
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Mesa cerrada con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa cerrada con exito"));
             } 
             else 
             {
@@ -93,7 +93,7 @@ class MesaController
 
             if ($resultado)
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Mesa borrada con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Mesa borrada con exito"));
             }
             else
             {

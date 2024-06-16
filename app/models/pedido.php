@@ -9,13 +9,12 @@ class Pedido
     private $_nombreCliente;
     private $_fotoMesa;
 
-    public function __construct($idMesa, $idMozo, $codigo, $nombreCliente, $fotoMesa, $id=null)
+    public function __construct($idMesa, $idMozo, $codigo, $nombreCliente, $id=null)
     {
         $this->_idMesa = $idMesa;
         $this->_idMozo = $idMozo;
         $this->_codigo = $codigo;
         $this->_nombreCliente = $nombreCliente;
-        $this->_fotoMesa = $fotoMesa;
         $this->_id = $id;
     }
 
@@ -35,7 +34,7 @@ class Pedido
 
         $query = "INSERT INTO 
                     pedidos (is_deleted, id_mesa, id_mozo, codigo, nombre_cliente, fecha_creacion, fecha_modificacion, foto_mesa)
-                    VALUES (false, :id_mesa, :id_mozo, :codigo, :nombre_cliente, :fecha_creacion, :fecha_modificacion, :foto_mesa)";
+                    VALUES (0, :id_mesa, :id_mozo, :codigo, :nombre_cliente, :fecha_creacion, :fecha_modificacion, :foto_mesa)";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $fechaCreacion = date('Y-m-d H:i:s');
@@ -64,14 +63,14 @@ class Pedido
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT codigo FROM pedidos WHERE codigo = :codigo AND NOT is_deleted";
+        $query = "SELECT codigo FROM pedidos WHERE codigo = :codigo";
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
         $queryPreparada->execute();
 
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if (count($resultado) > 0)
+        if ($resultado != false)
         {
             return true;
         }
@@ -85,21 +84,30 @@ class Pedido
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT id_mesa, id_mozo, codigo, nombre_cliente, foto_mesa, id FROM pedidos WHERE codigo = :codigo AND NOT is_deleted";
+        $query = "SELECT id_mesa, id_mozo, codigo, nombre_cliente, foto_mesa, id FROM pedidos 
+        WHERE codigo = :codigo AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
-
         $queryPreparada->bindParam(':codigo', $codigoPedido, PDO::PARAM_STR);
 
         $queryPreparada->execute();
 
-        return $queryPreparada->fetch(PDO::FETCH_CLASS, 'Pedido');
+        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila) 
+        {
+            return new Pedido($fila['id_mesa'], $fila['id_mozo'], $fila['codigo'], $fila['nombre_cliente'], $fila['id']);
+        } 
+        else 
+        {
+            return null;
+        }
     }
 
     public static function Borrar($idMesa)
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "UPDATE pedidos SET is_deleted = true, fecha_modificacion = :fecha_modificacion WHERE id_mesa = :id_mesa";
+        $query = "UPDATE pedidos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion WHERE id_mesa = :id_mesa";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':id_mesa', $idMesa, PDO::PARAM_STR);
@@ -118,13 +126,14 @@ class Pedido
                         SELECT SUM(pr.precio)
                         FROM pedidos_productos pp
                         INNER JOIN pedidos pe ON pp.id_pedido = pe.id
-                        INNER JOIN productos pr ON pp.id_productos = pr.id
-                        WHERE pe.id = :id_pedido
+                        INNER JOIN productos pr ON pp.id_producto = pr.id
+                        WHERE pe.id = :id_pedido_1 AND pp.estado != 'Cancelado'
                     )
-                    WHERE pe.id_pedido = :id_pedido";
+                    WHERE pe.id= :id_pedido_2";
         
         $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->bindParam(':id_pedido', $this->_id, PDO::PARAM_INT);
+        $queryPreparada->bindParam(':id_pedido_1', $this->_id, PDO::PARAM_INT);
+        $queryPreparada->bindParam(':id_pedido_2', $this->_id, PDO::PARAM_INT);
     
         return $queryPreparada->execute();
     }
@@ -137,7 +146,7 @@ class Pedido
                     FROM pedidos p
                     INNER JOIN pedidos_productos pp ON p.id = pp.id_pedido
                     INNER JOIN usuarios u ON pp.id_usuario = u.id
-                    WHERE p.id = :id_pedido AND u.sector = 'COCINA'
+                    WHERE p.id = :id_pedido AND u.sector = 'COCINERO'
                     GROUP BY p.id_mesa, p.id_mozo";
         
         $queryPreparada = $acceso->PrepararConsulta($query);
@@ -156,7 +165,7 @@ class Pedido
         $query = "SELECT MAX(pp.tiempo_estimado) AS tiempo_maximo_estimado
                 FROM pedidos_productos pp
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
-                INNER JOIN mesa me ON pe.id_mesa = me.id
+                INNER JOIN mesas me ON pe.id_mesa = me.id
                 WHERE me.codigo = :codigoMesa AND pe.codigo = :codigoPedido AND pp.estado = 'En Preparación'";
         $queryPreparada = $acceso->PrepararConsulta($query);
 

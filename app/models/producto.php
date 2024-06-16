@@ -28,7 +28,7 @@ class Producto
 
         $query = "INSERT INTO 
                     productos (is_deleted, tipo, codigo, nombre, precio, fecha_creacion, fecha_modificacion)
-                    VALUES (false, :tipo, :codigo, :nombre, :precio, :fecha_creacion, :fecha_modificacion)";
+                    VALUES (0, :tipo, :codigo, :nombre, :precio, :fecha_creacion, :fecha_modificacion)";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $fechaCreacion = date('Y-m-d H:i:s');
@@ -47,14 +47,14 @@ class Producto
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT codigo FROM productos WHERE codigo = :codigo AND NOT is_deleted";
+        $query = "SELECT codigo FROM productos WHERE codigo = :codigo AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
         $queryPreparada->execute();
 
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if (count($resultado) > 0)
+        if ($resultado != false)
         {
             return true;
         }
@@ -69,7 +69,7 @@ class Producto
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "SELECT tipo, codigo, nombre, precio, fecha_creacion, fecha_modificacion 
-                    FROM productos WHERE NOT is_deleted";
+                    FROM productos WHERE is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->execute();
@@ -82,14 +82,22 @@ class Producto
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "SELECT tipo, codigo, nombre, precio, id FROM productos 
-                    WHERE codigo = :codigo AND NOT is_deleted";
+                    WHERE codigo = :codigo AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':codigo', $codigoProducto, PDO::PARAM_STR);
-
         $queryPreparada->execute();
 
-        return $queryPreparada->fetch(PDO::FETCH_CLASS, 'Producto');
+        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila) 
+        {
+            return new Producto($fila['tipo'], $fila['codigo'], $fila['nombre'], $fila['precio'], $fila['id']);
+        } 
+        else 
+        {
+            return null;
+        }
     }
 
     public function ActualizarPrecio($precio)
@@ -98,7 +106,7 @@ class Producto
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "UPDATE productos SET precio = :precio, fecha_modificacion = :fecha_modificacion 
-                    WHERE codigo = :codigo AND NOT is_deleted";
+                    WHERE codigo = :codigo AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $fechaModificacion = date('Y-m-d H:i:s');
@@ -114,7 +122,7 @@ class Producto
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "UPDATE productos SET is_deleted = true, fecha_modificacion = :fecha_modificacion WHERE codigo = :codigo";
+        $query = "UPDATE productos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion WHERE codigo = :codigo";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);

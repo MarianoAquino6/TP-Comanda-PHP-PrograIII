@@ -22,7 +22,7 @@ class ProductoController
     
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Producto creado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Producto creado con exito"));
             } 
             else 
             {
@@ -58,7 +58,7 @@ class ProductoController
 
             if ($resultado) 
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Precio actualizado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Precio actualizado con exito"));
             } 
             else 
             {
@@ -80,7 +80,7 @@ class ProductoController
 
             if ($resultado)
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Producto borrado con éxito"));
+                return $this->CrearRespuesta($response, array("mensaje" => "Producto borrado con exito"));
             }
             else
             {

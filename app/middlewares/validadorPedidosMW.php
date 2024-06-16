@@ -29,7 +29,19 @@ class ValidadorPedidosMW
 
     public function __invoke(Request $request, RequestHandler $handler) 
     {
-        $parametros = $request->getParsedBody();
+        $method = $request->getMethod();
+
+        switch ($method) 
+        {
+            case 'POST':
+            case 'PUT':
+            case 'DELETE':
+                $parametros = $request->getParsedBody();
+                break;
+            case 'GET':
+                $parametros = $request->getQueryParams();
+                break;
+        }
 
         try
         {
@@ -69,7 +81,7 @@ class ValidadorPedidosMW
 
     private function validarRegistro($parametros, $request)
     {
-        if (!isset($parametros['codigoMesa'], $parametros['username'], $parametros['nombreCliente'], $parametros['fotoMesa'], $parametros['productos']) || empty($parametros['productos'])) 
+        if (!isset($parametros['codigoMesa'], $parametros['username'], $parametros['nombreCliente'], $parametros['productos']) || empty($parametros['productos'])) 
         {
             throw new Exception('Complete los parametros necesarios');
         }
@@ -87,11 +99,11 @@ class ValidadorPedidosMW
             }
         }
 
-        $mime = $request->getUploadedFiles()['fotoMesa']->getClientMediaType();
-        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) 
-        {
-            throw new Exception('La foto de la mesa debe ser una imagen válida (JPEG, PNG, GIF)');
-        }
+        // $mime = $request->getUploadedFiles()['fotoMesa']->getClientMediaType();
+        // if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) 
+        // {
+        //     throw new Exception('La foto de la mesa debe ser una imagen válida (JPEG, PNG, GIF)');
+        // }
 
         if (!Mesa::MesaExiste($parametros['codigoMesa']))
         {

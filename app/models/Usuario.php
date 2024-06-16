@@ -31,7 +31,7 @@ class Usuario
 
         $query = "INSERT INTO 
                     usuarios (is_deleted, username, pass, sector, fecha_creacion, fecha_modificacion)
-                    VALUES (false, :username, :pass, :sector, :fecha_creacion, :fecha_modificacion)";
+                    VALUES (0, :username, :pass, :sector, :fecha_creacion, :fecha_modificacion)";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $passHasheada = password_hash($this->_pass, PASSWORD_DEFAULT);
@@ -50,14 +50,14 @@ class Usuario
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT username FROM usuarios WHERE username = :username AND NOT is_deleted";
+        $query = "SELECT username FROM usuarios WHERE username = :username AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':username', $username, PDO::PARAM_STR);
         $queryPreparada->execute();
 
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if (count($resultado) > 0)
+        if ($resultado != false)
         {
             return true;
         }
@@ -71,9 +71,9 @@ class Usuario
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT username, pass, sector, fecha_creacion, fecha_modificacion 
+        $query = "SELECT username, sector, fecha_creacion, fecha_modificacion 
                     FROM usuarios
-                    WHERE NOT is_deleted";
+                    WHERE is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->execute();
@@ -92,7 +92,16 @@ class Usuario
 
         $queryPreparada->execute();
 
-        return $queryPreparada->fetch(PDO::FETCH_CLASS, 'Usuario');
+        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila) 
+        {
+            return new Usuario($fila['username'], $fila['pass'], $fila['sector'], $fila['id']);
+        } 
+        else 
+        {
+            return null;
+        }
     }
 
     public static function ObtenerSector($username)
@@ -115,7 +124,7 @@ class Usuario
 
         $query = "UPDATE usuarios 
                     SET username = :username, pass = :pass, sector = :sector, fecha_modificacion = :fecha_modificacion 
-                    WHERE username = :username_original AND NOT is_deleted";
+                    WHERE username = :username_original AND is_deleted = 0";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $passHasheada = password_hash($this->_pass, PASSWORD_DEFAULT);
@@ -135,7 +144,7 @@ class Usuario
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "UPDATE usuarios 
-                    SET is_deleted = true, fecha_modificacion = :fecha_modificacion 
+                    SET is_deleted = 1, fecha_modificacion = :fecha_modificacion 
                     WHERE username = :username";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
