@@ -6,25 +6,12 @@ class RegistroLogIn
     private $_sector;
     private $_fechaIngreso;
 
-    public function __construct($username)
+    public function __construct($username, $sector)
     {
         $this->_username = $username;
-        $this->_sector = $this->ObtenerSectorUsuario();
+        $this->_sector = $sector;
         date_default_timezone_set('America/Argentina/Buenos_Aires');
         $this->_fechaIngreso = date('Y-m-d H:i:s');
-    }
-
-    private function ObtenerSectorUsuario()
-    {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
-        $query = "SELECT sector FROM usuarios WHERE username = :username AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-
-        $queryPreparada->bindParam(':username', $this->_username, PDO::PARAM_STR);
-        $queryPreparada->execute();
-
-        return $queryPreparada->fetch(PDO::FETCH_ASSOC)['sector'];
     }
 
     public function Guardar()

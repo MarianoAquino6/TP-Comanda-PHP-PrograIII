@@ -22,6 +22,11 @@ class Producto
         return $this->_id;
     }
 
+    public function GetPrecio()
+    {
+        return $this->_precio;
+    }
+
     public function Registrar()
     {
         $acceso = AccesoDatos::ObtenerInstancia();
@@ -118,14 +123,14 @@ class Producto
         return $queryPreparada->execute();
     }
 
-    public static function Borrar($codigo)
+    public function Borrar()
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
         $query = "UPDATE productos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion WHERE codigo = :codigo";
         $queryPreparada = $acceso->PrepararConsulta($query);
 
-        $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
         $fechaModificacion = date('Y-m-d H:i:s');
         $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
 

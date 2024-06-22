@@ -10,34 +10,57 @@
 			"name": "usuarios",
 			"item": [
 				{
+					"name": "LOGIN",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"socioTesting\",\r\n    \"pass\": \"Soci01T!!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/login",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"usuarios",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "registrar",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "usernameCredencial",
-									"value": "root",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "cocinero1",
-									"type": "text"
-								},
-								{
-									"key": "pass",
-									"value": "Cocin41!!",
-									"type": "text"
-								},
-								{
-									"key": "sector",
-									"value": "COCINERO",
-									"type": "text"
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"socioTesting\",\r\n    \"pass\": \"Soci01T!!\",\r\n    \"sector\": \"ADMIN\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
 								}
-							]
+							}
 						},
 						"url": {
 							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/registrar",
@@ -60,6 +83,16 @@
 						"disableBodyPruning": true
 					},
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -89,13 +122,13 @@
 					"response": []
 				},
 				{
-					"name": "modificar",
+					"name": "modificar username",
 					"request": {
 						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"username\": \"mozo1\",\r\n    \"pass\": \"Mozzzz03!!\",\r\n    \"sector\": \"ADMIN\",\r\n    \"usernameOriginal\": \"mozo1\"\r\n}",
+							"raw": "{\r\n    \"usernameNuevo\": \"mozo1\",\r\n    \"usernameOriginal\": \"mozoPiola\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -103,7 +136,7 @@
 							}
 						},
 						"url": {
-							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/modificar",
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/modificar-username",
 							"host": [
 								"localhost"
 							],
@@ -111,7 +144,7 @@
 								"TP-Comanda-PHP-PrograIII",
 								"app",
 								"usuarios",
-								"modificar"
+								"modificar-username"
 							]
 						}
 					},
@@ -145,6 +178,100 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "modificar pass",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"mozoPiola\",\r\n    \"pass\": \"Mozo!!114\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/modificar-pass",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"usuarios",
+								"modificar-pass"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "modificar sector",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"mozo1\",\r\n    \"sector\": \"MOZO\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/modificar-sector",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"usuarios",
+								"modificar-sector"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ver logs de usuario",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/usuarios/logs-usuario?username=socio10",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"usuarios",
+								"logs-usuario"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "socio10"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -158,7 +285,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"codigo\": \"mesa4\"\r\n}",
+							"raw": "{\r\n    \"codigo\": \"mesa4\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -183,6 +310,16 @@
 				{
 					"name": "listar todos",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -203,11 +340,21 @@
 				{
 					"name": "actualizar estado",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"mozo1\",\r\n    \"codigo\": \"mesa1\",\r\n    \"estado\": \"Con cliente esperando pedido\"\r\n}",
+							"raw": "{\r\n    \"codigo\": \"mesa1\",\r\n    \"estado\": \"Con cliente esperando pedido\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -236,7 +383,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"codigo\": \"mesa1\"\r\n}",
+							"raw": "{\r\n    \"codigo\": \"mesa1\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -265,7 +412,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"codigo\": \"mesa1\"\r\n}",
+							"raw": "{\r\n    \"codigo\": \"mesa1\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -286,6 +433,36 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "obtener mesa mas usada",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/mesas/mas-usada",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"mesas",
+								"mas-usada"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -295,11 +472,21 @@
 				{
 					"name": "registrar",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDY0NDAsImV4cCI6MTcxOTA2NjQ0MCwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.2CJ0ctEr7-KopSqMTTbiX5uhb82td1b4GyFhRvXzu6c",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"tipo\": \"CERVEZA\",\r\n    \"codigo\": \"cerveza1\",\r\n    \"nombre\": \"Patagonia IPA 700ml\",\r\n    \"precio\": 5000\r\n}",
+							"raw": "{\r\n    \"tipo\": \"TRAGO\",\r\n    \"codigo\": \"daikiri1\",\r\n    \"nombre\": \"Daikiri\",\r\n    \"precio\": 5000\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -328,7 +515,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"codigo\": \"cerveza1\",\r\n    \"precio\": 6500\r\n}",
+							"raw": "{\r\n    \"codigo\": \"cerveza1\",\r\n    \"precio\": 6500\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -376,7 +563,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\": \"root\",\r\n    \"codigo\": \"cerveza1\"\r\n}",
+							"raw": "{\r\n    \"codigo\": \"cerveza1\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -397,6 +584,46 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "importar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDY0NDAsImV4cCI6MTcxOTA2NjQ0MCwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.2CJ0ctEr7-KopSqMTTbiX5uhb82td1b4GyFhRvXzu6c",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "csv",
+									"type": "file",
+									"src": "/C:/Users/x/Desktop/importador_prod.csv"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/productos/importar",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"productos",
+								"importar"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -410,7 +637,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\":\"mozo1\",\r\n    \"codigoMesa\":\"mesa1\",\r\n    \"username\":\"mozo1\",\r\n    \"nombreCliente\": \"Pedro Rodriguez\",\r\n    \"productos\":\r\n    [\r\n        {\r\n            \"codigo\":\"milanesa1\",\r\n            \"cantidad\": 1\r\n        },\r\n        {\r\n            \"codigo\":\"cerveza1\",\r\n            \"cantidad\": 2\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"codigoMesa\":\"mesa1\",\r\n    \"nombreCliente\": \"Pedro Rodriguez\",\r\n    \"productos\":\r\n    [\r\n        {\r\n            \"codigo\":\"milanesa1\",\r\n            \"cantidad\": 1\r\n        },\r\n        {\r\n            \"codigo\":\"cerveza1\",\r\n            \"cantidad\": 2\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -438,7 +665,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pendientes?usernameCredencial=cocinero1&username=cocinero1",
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pendientes",
 							"host": [
 								"localhost"
 							],
@@ -447,16 +674,6 @@
 								"app",
 								"pedidos",
 								"obtener-pendientes"
-							],
-							"query": [
-								{
-									"key": "usernameCredencial",
-									"value": "cocinero1"
-								},
-								{
-									"key": "username",
-									"value": "cocinero1"
-								}
 							]
 						}
 					},
@@ -469,7 +686,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\":\"cervecero2\",\r\n    \"username\":\"cervecero2\",\r\n    \"codigoPedido\":\"d8f09\",\r\n    \"codigoProducto\":\"cerveza1\",\r\n    \"tiempoEstimado\":8\r\n}",
+							"raw": "{\r\n    \"codigoPedido\":\"d8f09\",\r\n    \"codigoProducto\":\"cerveza1\",\r\n    \"tiempoEstimado\":8\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -497,7 +714,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pedidos-tomados?usernameCredencial=mozo1&username=mozo1",
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pedidos-tomados",
 							"host": [
 								"localhost"
 							],
@@ -506,16 +723,6 @@
 								"app",
 								"pedidos",
 								"obtener-pedidos-tomados"
-							],
-							"query": [
-								{
-									"key": "usernameCredencial",
-									"value": "mozo1"
-								},
-								{
-									"key": "username",
-									"value": "mozo1"
-								}
 							]
 						}
 					},
@@ -528,7 +735,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"usernameCredencial\":\"cocinero1\",\r\n    \"username\":\"cocinero1\",\r\n    \"codigoPedido\":\"d8f09\",\r\n    \"codigoProducto\":\"milanesa1\"\r\n}",
+							"raw": "{\r\n    \"codigoPedido\":\"d8f09\",\r\n    \"codigoProducto\":\"milanesa1\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -556,7 +763,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pedidos-listos?usernameCredencial=mozo1&username=mozo1",
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/obtener-pedidos-listos",
 							"host": [
 								"localhost"
 							],
@@ -565,16 +772,6 @@
 								"app",
 								"pedidos",
 								"obtener-pedidos-listos"
-							],
-							"query": [
-								{
-									"key": "usernameCredencial",
-									"value": "mozo1"
-								},
-								{
-									"key": "username",
-									"value": "mozo1"
-								}
 							]
 						}
 					},
@@ -583,10 +780,20 @@
 				{
 					"name": "obtener todos pedidos",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTg1ODc0OTUsImV4cCI6MTcxODY0NzQ5NSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2NpbzEwIiwic2VjdG9yIjoiQURNSU4ifSwiYXBwIjoiTEEgQ09NQU5EQSJ9.PrHmqOuSJEZaXqewdE5EUDy-aN4RYIR4ZJoy-H7EPl4",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/?usernameCredencial=root",
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/",
 							"host": [
 								"localhost"
 							],
@@ -595,12 +802,6 @@
 								"app",
 								"pedidos",
 								""
-							],
-							"query": [
-								{
-									"key": "usernameCredencial",
-									"value": "root"
-								}
 							]
 						}
 					},
@@ -643,7 +844,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"credencialUsuario\": \"mozo1\",\r\n    \"codigoPedido\": \"d8f09\"\r\n}",
+							"raw": "{\r\n    \"codigoPedido\": \"d8f09\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -660,6 +861,369 @@
 								"app",
 								"pedidos",
 								"cobrar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "demoras",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/demoras",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"demoras"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "operaciones por sector empleados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/operaciones-por-sector-empleados",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"operaciones-por-sector-empleados"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ordenar productos mas vendidos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/productos-mas-vendidos",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"productos-mas-vendidos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "vincular foto",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "codigoPedido",
+									"value": "d8f09",
+									"type": "text"
+								},
+								{
+									"key": "foto",
+									"type": "file",
+									"src": "/C:/Users/x/Pictures/IMG_20191106_071403_571.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/foto",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"foto"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "obtener fotos (TERMINAR)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/fotos",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"fotos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cancelar todo",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"codigoPedido\": \"d8f09\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/cancelar-todo",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"cancelar-todo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cancelar uno",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"codigoPedido\": \"d8f09\",\r\n    \"codigoProducto\": \"cerveza1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/cancelar-uno",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"cancelar-uno"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "obtener cancelados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/cancelados",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"cancelados"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "operaciones por sector",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/operaciones-por-sector",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"operaciones-por-sector"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "operaciones por empleados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/operaciones-por-empleados",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"operaciones-por-empleados"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ordenar productos menos vendidos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTkwMDg4MjUsImV4cCI6MTcxOTA2ODgyNSwiYXVkIjoiZDM3N2FkNDRlZjZlNWZkMmJlNTE5ODRhODdhNWNkNTAzOWJmZDAxMyIsImRhdGEiOnsidXNlcm5hbWUiOiJzb2Npb1Rlc3RpbmciLCJzZWN0b3IiOiJBRE1JTiJ9LCJhcHAiOiJMQSBDT01BTkRBIn0.fVPCjgk3oM1Rsp5JHXHpteRvLBo0KB3DF5ijfg4vbcc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/pedidos/productos-menos-vendidos",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"pedidos",
+								"productos-menos-vendidos"
 							]
 						}
 					},
@@ -703,7 +1267,19 @@
 					"name": "mejores comentarios",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "localhost/TP-Comanda-PHP-PrograIII/app/reseñas/top",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"TP-Comanda-PHP-PrograIII",
+								"app",
+								"reseñas",
+								"top"
+							]
+						}
 					},
 					"response": []
 				}

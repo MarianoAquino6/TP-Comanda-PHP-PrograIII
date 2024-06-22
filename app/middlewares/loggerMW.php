@@ -9,21 +9,28 @@ class LoggerMW
 {
     public function __invoke(Request $request, RequestHandler $handler) 
     {
-        $parametros = $request->getParsedBody();
-        
-        try 
-        {
-            $nuevoRegistroLogIn = new RegistroLogIn($parametros['username']);
-            $nuevoRegistroLogIn->Guardar();
-        } 
-        catch (Exception $e)
-        {
-            $response = new Response();
-            $response->getBody()->write('Error al guardar el log: ' . $e->getMessage());
-            return $response->withStatus(500);
-        }
-
         $response = $handler->handle($request);
+
+        if ($response->getStatusCode() == 200)
+        {
+            $body = (string) $response->getBody();
+            $parsedBody = json_decode($body, true);
+            $sector = $parsedBody['sector'];
+
+            $parametros = $request->getParsedBody();
+        
+            try 
+            {
+                $nuevoRegistroLogIn = new RegistroLogIn($parametros['username'], $sector);
+                $nuevoRegistroLogIn->Guardar();
+            } 
+            catch (Exception $e)
+            {
+                $response = new Response();
+                $response->getBody()->write('Error al guardar el log: ' . $e->getMessage());
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            }
+        }
 
         return $response;
     }

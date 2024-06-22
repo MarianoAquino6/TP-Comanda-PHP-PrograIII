@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class Pedido
 {
@@ -9,7 +9,7 @@ class Pedido
     private $_nombreCliente;
     private $_fotoMesa;
 
-    public function __construct($idMesa, $idMozo, $codigo, $nombreCliente, $id=null)
+    public function __construct($idMesa, $idMozo, $codigo, $nombreCliente, $id = null)
     {
         $this->_idMesa = $idMesa;
         $this->_idMozo = $idMozo;
@@ -26,6 +26,11 @@ class Pedido
     public function GetCodigo()
     {
         return $this->_codigo;
+    }
+
+    public function SetFoto($foto)
+    {
+        $this->_fotoMesa = $foto;
     }
 
     public function RegistrarYDevolverId()
@@ -49,12 +54,9 @@ class Pedido
 
         $resultado = $queryPreparada->execute();
 
-        if ($resultado)
-        {
+        if ($resultado) {
             return $acceso->ObtenerUltimoId();
-        }
-        else
-        {
+        } else {
             return $resultado;
         }
     }
@@ -70,12 +72,9 @@ class Pedido
 
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if ($resultado != false)
-        {
+        if ($resultado != false) {
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
@@ -93,12 +92,9 @@ class Pedido
 
         $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if ($fila) 
-        {
+        if ($fila) {
             return new Pedido($fila['id_mesa'], $fila['id_mozo'], $fila['codigo'], $fila['nombre_cliente'], $fila['id']);
-        } 
-        else 
-        {
+        } else {
             return null;
         }
     }
@@ -120,7 +116,7 @@ class Pedido
     public function ActualizarImporteTotal()
     {
         $acceso = AccesoDatos::ObtenerInstancia();
-        
+
         $query = "UPDATE pedidos pe
                     SET importe_total = (
                         SELECT SUM(pr.precio)
@@ -130,11 +126,11 @@ class Pedido
                         WHERE pe.id = :id_pedido_1 AND pp.estado != 'Cancelado'
                     )
                     WHERE pe.id= :id_pedido_2";
-        
+
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->bindParam(':id_pedido_1', $this->_id, PDO::PARAM_INT);
         $queryPreparada->bindParam(':id_pedido_2', $this->_id, PDO::PARAM_INT);
-    
+
         return $queryPreparada->execute();
     }
 
@@ -148,7 +144,7 @@ class Pedido
                     INNER JOIN usuarios u ON pp.id_usuario = u.id
                     WHERE p.id = :id_pedido AND u.sector = 'COCINERO'
                     GROUP BY p.id_mesa, p.id_mozo";
-        
+
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':id_pedido', $idPedido, PDO::PARAM_INT);
@@ -162,18 +158,90 @@ class Pedido
     {
         $acceso = AccesoDatos::ObtenerInstancia();
 
-        $query = "SELECT MAX(pp.tiempo_estimado) AS tiempo_maximo_estimado
-                FROM pedidos_productos pp
-                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
-                INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE me.codigo = :codigoMesa AND pe.codigo = :codigoPedido AND pp.estado = 'En Preparación'";
+        $query = "SELECT TIME_TO_SEC(TIMEDIFF(DATE_ADD(pp.hora_inicio, INTERVAL pp.tiempo_estimado MINUTE), NOW())) AS tiempo_restante
+                    FROM pedidos_productos pp
+                    INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                    INNER JOIN mesas me ON pe.id_mesa = me.id
+                    WHERE me.codigo = :codigoMesa AND pe.codigo = :codigoPedido AND pp.estado = 'En Preparación'
+                    ORDER BY pp.tiempo_estimado DESC
+                    LIMIT 1";
+
         $queryPreparada = $acceso->PrepararConsulta($query);
 
         $queryPreparada->bindParam(':codigoMesa', $codigoMesa, PDO::PARAM_STR);
         $queryPreparada->bindParam(':codigoPedido', $codigoPedido, PDO::PARAM_STR);
-
         $queryPreparada->execute();
 
-        return $queryPreparada->fetch(PDO::FETCH_ASSOC)['tiempo_maximo_estimado'];
+        $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+
+        if ($resultado !== false) 
+        {
+            $tiempoRestanteSegundos = $resultado['tiempo_restante'];
+            $tiempoRestanteMinutos = $tiempoRestanteSegundos / 60;
+            return $tiempoRestanteMinutos;
+        } 
+        else 
+        {
+            return false; 
+        }
+    }
+
+    public static function TodosPedidosPendientes($codigoPedido)
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT COUNT(*) AS total, COUNT(IF(pp.estado = 'Pendiente', 1, NULL)) AS pendientes
+                FROM pedidos_productos pp
+                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                WHERE pe.codigo = :codigoPedido
+                HAVING total = pendientes";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->bindParam(':codigoPedido', $codigoPedido, PDO::PARAM_STR);
+        $queryPreparada->execute();
+
+        $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+        if ($resultado !== false) 
+        {
+            return $resultado['total'] == $resultado['pendientes'];
+        } 
+        else 
+        {
+            return false;
+        }
+    }
+
+    public function VincularFoto()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "UPDATE pedidos SET foto_mesa = :foto, fecha_modificacion = :fecha WHERE codigo = :codigo"; 
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        // Lee el archivo de la imagen en modo binario
+        $fotoBinaria = file_get_contents($this->_fotoMesa);
+        $queryPreparada->bindParam(':foto', $fotoBinaria, PDO::PARAM_LOB);
+        $fechaModificacion = date('Y-m-d H:i:s');
+        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
+        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
+
+        return $queryPreparada->execute();
+    }
+
+    public function CancelarPedidoEntero()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "UPDATE pedidos_productos pp
+                    JOIN pedidos p ON pp.id_pedido = p.id
+                    SET pp.estado = 'Cancelado', p.fecha_modificacion = :fecha_modificacion
+                    WHERE p.id = :id_pedido";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->bindParam(':id_pedido', $this->_id, PDO::PARAM_INT);
+        $fechaModificacion = date('Y-m-d H:i:s');
+        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
+
+        return $queryPreparada->execute();
     }
 }

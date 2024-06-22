@@ -11,16 +11,19 @@ require_once './models/pedido.php';
 enum ModoValidacionPedidos
 {
     case Registro;
-    case ObtenerRegistros;
     case TomarPedido;
     case TerminarPedido;
     case Cobrar;
     case TiempoRestante;
+    case Foto;
+    case CancelarTodo;
+    case CancelarUno;
 }
 
 class ValidadorPedidosMW
 {
     public $modoValidacion;
+    private $_username;
 
     public function __construct($modoValidacion)
     {
@@ -43,15 +46,15 @@ class ValidadorPedidosMW
                 break;
         }
 
+        $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+        $this->_username = JWTHandler::ObtenerData($tokenRecibido)->username;
+
         try
         {
             switch ($this->modoValidacion)
             {
                 case ModoValidacionPedidos::Registro:
                     $this->validarRegistro($parametros, $request);
-                    break;
-                case ModoValidacionPedidos::ObtenerRegistros:
-                    $this->validarObtenerRegistros($parametros);
                     break;
                 case ModoValidacionPedidos::TomarPedido:
                     $this->validarTomarPedido($parametros);
@@ -64,6 +67,15 @@ class ValidadorPedidosMW
                     break;
                 case ModoValidacionPedidos::TiempoRestante:
                     $this->validarTiempoRestante($parametros);
+                    break;
+                case ModoValidacionPedidos::Foto:
+                    $this->validarVincularFoto($parametros);
+                    break;
+                case ModoValidacionPedidos::CancelarUno:
+                    $this->validarTerminarPedido($parametros);
+                    break;
+                case ModoValidacionPedidos::CancelarTodo:
+                    $this->validarCobrar($parametros);
                     break;
             }
 
@@ -81,7 +93,7 @@ class ValidadorPedidosMW
 
     private function validarRegistro($parametros, $request)
     {
-        if (!isset($parametros['codigoMesa'], $parametros['username'], $parametros['nombreCliente'], $parametros['productos']) || empty($parametros['productos'])) 
+        if (!isset($parametros['codigoMesa'], $parametros['nombreCliente'], $parametros['productos']) || empty($parametros['productos'])) 
         {
             throw new Exception('Complete los parametros necesarios');
         }
@@ -99,19 +111,9 @@ class ValidadorPedidosMW
             }
         }
 
-        // $mime = $request->getUploadedFiles()['fotoMesa']->getClientMediaType();
-        // if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) 
-        // {
-        //     throw new Exception('La foto de la mesa debe ser una imagen válida (JPEG, PNG, GIF)');
-        // }
-
         if (!Mesa::MesaExiste($parametros['codigoMesa']))
         {
             throw new Exception('La mesa ingresada no existe');
-        }
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {   
-            throw new Exception('El username ingresado no existe');
         }
 
         foreach ($parametros['productos'] as $producto) 
@@ -123,22 +125,9 @@ class ValidadorPedidosMW
         }
     }
 
-    private function validarObtenerRegistros($parametros)
-    {
-        if (!isset($parametros['username']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {   
-            throw new Exception('El username ingresado no existe');
-        }
-    }
-
     private function validarTomarPedido($parametros)
     {
-        if (!isset($parametros['username'], $parametros['codigoPedido'], $parametros['codigoProducto'], $parametros['tiempoEstimado']))
+        if (!isset($parametros['codigoPedido'], $parametros['codigoProducto'], $parametros['tiempoEstimado']))
         {
             throw new Exception('Complete los parametros necesarios');
         }
@@ -160,7 +149,7 @@ class ValidadorPedidosMW
 
     private function validarTerminarPedido($parametros)
     {
-        if (!isset($parametros['username'], $parametros['codigoPedido'], $parametros['codigoProducto']))
+        if (!isset($parametros['codigoPedido'], $parametros['codigoProducto']))
         {
             throw new Exception('Complete los parametros necesarios');
         }
@@ -202,6 +191,40 @@ class ValidadorPedidosMW
         if (!Pedido::PedidoExiste($parametros['codigoPedido']))
         {
             throw new Exception('El pedido ingresado no existe');
+        }
+    }
+
+    private function validarVincularFoto($parametros)
+    {
+        if (!isset($parametros['codigoPedido']))
+        {
+            throw new Exception('Complete los parametros necesarios: codigoPedido, foto');
+        }
+
+        if (!Pedido::PedidoExiste($parametros['codigoPedido']))
+        {
+            throw new Exception('El pedido ingresado no existe');
+        }
+
+        // Verifico si hubo errores al subir la foto
+        switch ($_FILES['foto']['error'])
+        {
+            case UPLOAD_ERR_OK:
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                throw new Exception('No se subió ningún archivo');
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                throw new Exception('Excede el tamaño máximo de archivo permitido');
+            default:
+                throw new Exception('Error desconocido al subir el archivo');
+        }
+
+        // Validar si el archivo es una imagen
+        $file_extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+        if (!in_array(strtolower($file_extension), ['jpg', 'jpeg', 'png', 'gif'])) 
+        {
+            throw new Exception('El archivo no es una imagen');
         }
     }
 }

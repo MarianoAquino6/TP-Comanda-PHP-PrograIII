@@ -5,6 +5,7 @@ require_once './models/pedidoProducto.php';
 require_once './models/mesa.php';
 require_once './models/usuario.php';
 require_once './models/producto.php';
+require_once './JWT/JWTHandler.php';
 
 class PedidoController
 {
@@ -19,10 +20,13 @@ class PedidoController
     {
         try 
         {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
             $parametros = $request->getParsedBody();
 
             $mesa = Mesa::ObtenerUno($parametros['codigoMesa']);
-            $mozo = Usuario::ObtenerUno($parametros['username']);
+            $mozo = Usuario::ObtenerUno($username);
             $codigoPedido = substr(bin2hex(random_bytes(6)), 0, 6);
 
             $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente']);
@@ -55,23 +59,16 @@ class PedidoController
         }
     }
 
-    //VER ESTO PARA QUE LOS SOCIOS PUEDAN VER TODOS LOS PEDIDOS CON SUS RESPECTIVOS ESTADOS
-    // public function ObtenerTodosLosPedidos($request, $response, $args)
-    // {
-    //     $lista = Pedido::ObtenerTodos();
-    //     $payload = json_encode(array("listaPedidos" => $lista));
-
-    //     $response->getBody()->write($payload);
-    //     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    // }
-
     public function TomarPedido($request, $response, $args)
     {
         try
         {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
             $parametros = $request->getParsedBody();
 
-            $empleado = Usuario::ObtenerUno($parametros['username']);
+            $empleado = Usuario::ObtenerUno($username);
             $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
             $producto = Producto::ObtenerUno($parametros['codigoProducto']);
             $pedidoProductoDisponible = PedidoProducto::ObtenerPedidoProductoDisponible($pedido->GetId(), $producto->GetId());
@@ -97,9 +94,12 @@ class PedidoController
     {
         try
         {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
             $parametros = $request->getParsedBody();
 
-            $empleado = Usuario::ObtenerUno($parametros['username']);
+            $empleado = Usuario::ObtenerUno($username);
             $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
             $producto = Producto::ObtenerUno($parametros['codigoProducto']);
             $pedidoProductoEnPreparacion = PedidoProducto::ObtenerPedidoProductoEnPreparacion($pedido->GetId(), $producto->GetId(), $empleado->GetId());
@@ -125,9 +125,11 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getQueryParams();
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
 
-            $usuario = Usuario::ObtenerUno($parametros['username']);
+            $usuario = Usuario::ObtenerUno($username);
             $pedidosDisponibles = null;
 
             switch ($usuario->GetSector()) 
@@ -157,9 +159,11 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getQueryParams();
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
 
-            $usuario = Usuario::ObtenerUno($parametros['username']);
+            $usuario = Usuario::ObtenerUno($username);
             $pedidosTomados = PedidoProducto::ObtenerPedidosTomadosMozo($usuario->GetId());
 
             return $this->CrearRespuesta($response, array("listaPedidosTomados" => $pedidosTomados));
@@ -174,9 +178,11 @@ class PedidoController
     {
         try 
         {
-            $parametros = $request->getQueryParams();
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
 
-            $usuario = Usuario::ObtenerUno($parametros['username']);
+            $usuario = Usuario::ObtenerUno($username);
             $pedidosListos = PedidoProducto::ObtenerPedidosListosMozo($usuario->GetId());
 
             return $this->CrearRespuesta($response, array("listaPedidosListos" => $pedidosListos));
@@ -192,6 +198,7 @@ class PedidoController
         try 
         {
             $pedidosConEstados = PedidoProducto::ObtenerPedidosConEstados();
+
             return $this->CrearRespuesta($response, array("listaPedidosEstados" => $pedidosConEstados));
         } 
         catch (Exception $e) 
@@ -232,6 +239,253 @@ class PedidoController
         $codigoPedido = $parametros['codigoPedido'];
         $tiempoRestante = Pedido::ObtenerTiempoRestante($codigoMesa, $codigoPedido);
 
-        return $this->CrearRespuesta($response, array("mensaje" => "El tiempo restante es de " . $tiempoRestante. " minutos"));
+        //Si no me trajo ningun resultado es porque todos los pedidos estan aun pendientes o porque estan todos listos
+        if (!$tiempoRestante)
+        {
+            // Corroboro si todos los pedidos estan pendientes
+            if (Pedido::TodosPedidosPendientes($codigoPedido))
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Aun no se ha comenzado a preparar el pedido, por lo tanto no hay un tiempo estimado"));
+            }
+
+            // Entonces todos los pedidos estan listos para servir
+            return $this->CrearRespuesta($response, array("mensaje" => "Todos sus pedidos estan listos para servir"));
+        }
+
+        if ($tiempoRestante < 0)
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => "Su pedido lleva demorado " . (intval($tiempoRestante*-1)). " minutos mas de lo esperado"));
+        }
+
+        return $this->CrearRespuesta($response, array("mensaje" => "Su pedido esta siendo preparado! El tiempo restante es de " . $tiempoRestante. " minutos"));
     }
+
+    public function ObtenerDemoras($request, $response, $args)
+    {
+        try 
+        {
+            $pedidosDemorados = PedidoProducto::ObtenerPedidosDemorados();
+
+            if (!$pedidosDemorados)
+            {
+                throw new Exception("No existen pedidos con demoras");
+            }
+
+            return $this->CrearRespuesta($response, array("listaPedidosDemora" => $pedidosDemorados));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerOperacionesPorSectorEmpleados($request, $response, $args)
+    {
+        try 
+        {
+            $operacionesPorSector = PedidoProducto::ObtenerOperacionesPorSectorEmpleados();
+
+            if (!$operacionesPorSector)
+            {
+                throw new Exception("Aun no existen operaciones");
+            }
+
+            return $this->CrearRespuesta($response, array("operacionesPorSector" => $operacionesPorSector));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerOperacionesPorSector($request, $response, $args)
+    {
+        try 
+        {
+            $operacionesPorSector = PedidoProducto::ObtenerOperacionesPorSector();
+
+            if (!$operacionesPorSector)
+            {
+                throw new Exception("Aun no existen operaciones");
+            }
+
+            return $this->CrearRespuesta($response, array("operacionesPorSector" => $operacionesPorSector));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerOperacionesPorEmpleados($request, $response, $args)
+    {
+        try 
+        {
+            $operacionesPorSector = PedidoProducto::ObtenerOperacionesPorEmpleados();
+
+            if (!$operacionesPorSector)
+            {
+                throw new Exception("Aun no existen operaciones");
+            }
+
+            return $this->CrearRespuesta($response, array("operacionesPorEmpleados" => $operacionesPorSector));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerProductosOrdenadosPorVentasMayorAMenor($request, $response, $args)
+    {
+        try 
+        {
+            $productosOrdenadosPorVentas = PedidoProducto::ObtenerProductosOrdenadosPorVentasMayorAMenor();
+
+            if (!$productosOrdenadosPorVentas)
+            {
+                throw new Exception("Aun no se vendieron productos");
+            }
+
+            return $this->CrearRespuesta($response, array("productosOrdenadosPorVentas" => $productosOrdenadosPorVentas));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerProductosOrdenadosPorVentasMenorAMayor($request, $response, $args)
+    {
+        try 
+        {
+            $productosOrdenadosPorVentas = PedidoProducto::ObtenerProductosOrdenadosPorVentasMenorAMayor();
+
+            if (!$productosOrdenadosPorVentas)
+            {
+                throw new Exception("Aun no se vendieron productos");
+            }
+
+            return $this->CrearRespuesta($response, array("productosOrdenadosPorVentas" => $productosOrdenadosPorVentas));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function VincularFoto($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $pedido->SetFoto($_FILES['foto']['tmp_name']);
+            // $pedido->SetFoto($_FILES['foto']);
+            $resultado = $pedido->VincularFoto();
+
+            if ($resultado)
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Foto vinculada con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al vincular la foto");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function CancelarTodo($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $resultado = $pedido->CancelarPedidoEntero();
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido cancelado totalmente con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al cancelar el pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function CancelarUno($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $producto = Producto::ObtenerUno($parametros['codigoProducto']);
+
+            $resultado = PedidoProducto::Cancelar($pedido->GetId(), $producto->GetId());
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido cancelado con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al cancelar el pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerPedidosCancelados($request, $response, $args)
+    {
+        try
+        {
+            $resultado = PedidoProducto::ObtenerPedidosCancelados();
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("Pedidos Cancelados" => $resultado));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al obtener los pedidos cancelados");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    // public function ObtenerFotosPedidos($request, $response, $args)
+    // {
+    //     try 
+    //     {
+    //         $fotosPedidos = Pedido::ObtenerFotosClientes();
+
+    //         if (!$fotosPedidos)
+    //         {
+    //             throw new Exception("No hay fotos vinculadas");
+    //         }
+
+    //         return $this->CrearRespuesta($response, array("fotosClientes" => $fotosPedidos));
+    //     } 
+    //     catch (Exception $e) 
+    //     {
+    //         return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+    //     }
+    // }
 }

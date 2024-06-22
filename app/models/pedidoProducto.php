@@ -189,7 +189,8 @@ class PedidoProducto
     {
         $acceso = AccesoDatos::ObtenerInstancia();
     
-        $query = "SELECT me.codigo, me.estado, pe.codigo, pr.nombre, pp.estado FROM pedidos_productos pp
+        $query = "SELECT me.codigo AS mesa, me.estado AS estado_mesa, pe.codigo AS pedido, 
+                pr.nombre AS producto, pp.estado AS estado_producto, pp.tiempo_estimado AS tiempo_estimado FROM pedidos_productos pp
                     INNER JOIN productos pr ON pp.id_producto = pr.id
                     INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                     INNER JOIN mesas me ON pe.id_mesa = me.id
@@ -197,7 +198,203 @@ class PedidoProducto
         
         $queryPreparada = $acceso->PrepararConsulta($query);
         $queryPreparada->execute();
+
+        $resultados = $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+
+        //Armo el array para que sea mas lindo
+        return self::ConstruirArrayPedidos($resultados);
+    }
+
+    private static function ConstruirArrayPedidos($resultados)
+    {
+        $pedidos = [];
+
+        foreach ($resultados as $fila) 
+        {
+            $mesaCodigo = $fila['mesa'];
+
+            require_once './models/pedido.php';
+
+            $tiempoRestante = Pedido::ObtenerTiempoRestante($mesaCodigo, $fila['pedido']);
+
+            // Inicializa la mesa si no existe
+            if (!isset($pedidos[$mesaCodigo])) 
+            {
+                $pedidos[$mesaCodigo] = [
+                    'mesa' => $mesaCodigo,
+                    'estado_mesa' => $fila['estado_mesa'],
+                    'pedido' => $fila['pedido'],
+                    'tiempo_restante' => ($tiempoRestante !== false) ? $tiempoRestante : 0,
+                    'productos_ordenados' => []
+                ];
+            }
+
+            // Añade el producto al pedido
+            $pedidos[$mesaCodigo]['productos_ordenados'][] = [
+                'producto' => $fila['producto'],
+                'estado_producto' => $fila['estado_producto'],
+                'tiempo_estimado' => $fila['tiempo_estimado']
+            ];
+        }
+
+        // Convierta el array asociativo en un array indexado
+        return array_values($pedidos);
+    }
+
+    public static function ObtenerPedidosDemorados()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
     
+        $query = "SELECT me.codigo AS mesa, pe.codigo AS pedido, pr.nombre AS producto, 
+                    FLOOR(TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) / 60) AS minutos_demorados
+                    FROM pedidos_productos pp
+                    INNER JOIN productos pr ON pp.id_producto = pr.id
+                    INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                    INNER JOIN mesas me ON pe.id_mesa = me.id
+                    WHERE pp.estado != 'Cancelado' AND (TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) > pp.tiempo_estimado)";
+        
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerOperacionesPorSectorEmpleados()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT u.sector, u.username, COUNT(*) AS cantidad_operaciones
+                    FROM pedidos_productos pp
+                    INNER JOIN usuarios u ON pp.id_usuario = u.id
+                    GROUP BY u.sector, u.username
+                    ORDER BY u.sector, u.username";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        $resultados = $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+
+        return self::ProcesarResultados($resultados);
+    }
+
+    public static function ObtenerOperacionesPorSector()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT u.sector, COUNT(*) AS cantidad_operaciones
+                    FROM pedidos_productos pp
+                    INNER JOIN usuarios u ON pp.id_usuario = u.id
+                    GROUP BY u.sector
+                    ORDER BY u.sector";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerOperacionesPorEmpleados()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT u.username, COUNT(*) AS cantidad_operaciones
+                    FROM pedidos_productos pp
+                    INNER JOIN usuarios u ON pp.id_usuario = u.id
+                    GROUP BY u.username
+                    ORDER BY u.username";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private static function ProcesarResultados($resultados)
+    {
+        $operacionesPorSector = [];
+
+        foreach ($resultados as $fila) 
+        {
+            $sector = $fila['sector'];
+            $username = $fila['username'];
+            $cantidadOperaciones = $fila['cantidad_operaciones'];
+
+            if (!isset($operacionesPorSector[$sector])) 
+            {
+                $operacionesPorSector[$sector] = [];
+            }
+
+            $operacionesPorSector[$sector][] = [
+                'username' => $username,
+                'cantidad_operaciones' => $cantidadOperaciones
+            ];
+        }
+
+        return $operacionesPorSector;
+    }
+
+    public static function ObtenerProductosOrdenadosPorVentasMayorAMenor()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT pr.nombre, pr.codigo, COUNT(*) AS cantidad_comprada FROM pedidos_productos pp
+                    INNER JOIN productos pr ON pp.id_producto = pr.id
+                    WHERE pp.estado != 'Cancelado'
+                    GROUP BY pr.nombre
+                    ORDER BY cantidad_comprada DESC";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerProductosOrdenadosPorVentasMenorAMayor()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "SELECT pr.nombre, pr.codigo, COUNT(*) AS cantidad_comprada FROM pedidos_productos pp
+                    INNER JOIN productos pr ON pp.id_producto = pr.id
+                    WHERE pp.estado != 'Cancelado'
+                    GROUP BY pr.nombre
+                    ORDER BY cantidad_comprada ASC";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
+        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function Cancelar($idPedido, $idProducto)
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+
+        $query = "UPDATE pedidos_productos
+                    SET estado = 'Cancelado'
+                    WHERE id_pedido = :id_pedido AND id_producto = :id_producto AND estado != 'Cancelado'
+                    LIMIT 1";
+
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->bindParam(':id_pedido', $idPedido, PDO::PARAM_INT);
+        $queryPreparada->bindParam(':id_producto', $idProducto, PDO::PARAM_INT);
+
+        return $queryPreparada->execute();
+    }
+
+    public static function ObtenerPedidosCancelados()
+    {
+        $acceso = AccesoDatos::ObtenerInstancia();
+    
+        $query = "SELECT me.codigo AS mesa, pe.codigo AS pedido, pr.nombre AS producto, pe.fecha_creacion AS fecha
+                    FROM pedidos_productos pp
+                    INNER JOIN productos pr ON pp.id_producto = pr.id
+                    INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                    INNER JOIN mesas me ON pe.id_mesa = me.id
+                    WHERE pp.estado = 'Cancelado'";
+        
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        $queryPreparada->execute();
+
         return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
     }
 }

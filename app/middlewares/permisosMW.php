@@ -3,7 +3,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 
-require_once './models/usuario.php';
+require_once './JWT/JWTHandler.php';
 
 class PermisosMW
 {
@@ -16,16 +16,11 @@ class PermisosMW
 
     public function __invoke(Request $request, RequestHandler $handler) 
     {
-        $parametros = $request->getParsedBody();
-
         try
         {
-            if (!isset($parametros['usernameCredencial'])) 
-            {
-                throw new Exception('El parametro usernameCredencial es requerido.');
-            }
-
-            $sectorUsuario = Usuario::ObtenerSector($parametros['usernameCredencial']);
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $sectorUsuario = $data->sector;
 
             if (!in_array($sectorUsuario, $this->sectoresUsuario))
             {
@@ -38,15 +33,7 @@ class PermisosMW
         {
             $response = new Response();
             $response->getBody()->write($e->getMessage());
-
-            if ($e->getMessage() === 'El parametro usernameCredencial es requerido.') 
-            {
-                return $response->withStatus(400);
-            } 
-            else 
-            {
-                return $response->withStatus(403);
-            }
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
         return $response;

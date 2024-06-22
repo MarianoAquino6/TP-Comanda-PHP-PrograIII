@@ -76,7 +76,8 @@ class ProductoController
         try
         {
             $parametros = $request->getParsedBody();
-            $resultado = Producto::Borrar($parametros['codigo']);
+            $productoABorrar = Producto::ObtenerUno($parametros['codigo']);
+            $resultado = $productoABorrar->Borrar();
 
             if ($resultado)
             {
@@ -85,6 +86,52 @@ class ProductoController
             else
             {
                 throw new Exception("Ha surgido un error al borrar el producto");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ImportarProductos($request, $response, $args)
+    {
+        try
+        {
+            //$encabezadoEsperado = ['is_deleted', 'tipo', 'codigo', 'nombre', 'precio'];
+            $archivo = fopen($_FILES['csv']['tmp_name'], 'r');
+
+            while (($row = fgetcsv($archivo, 1000, ",")) != FALSE) 
+            {
+                // Si no existe en la base lo creo y registro
+                if (!Producto::ProductoExiste($row[2]))
+                {
+                    $nuevoProducto = new Producto($row[1], $row[2], $row[3], $row[4]);
+                    $resultado = $nuevoProducto->Registrar();
+                }
+
+                // En caso de que ya existe lo actualizo
+                if (Producto::ProductoExiste($row[2]))
+                {
+                    $productoAActualizar = Producto::ObtenerUno($row[2]);
+
+                    // Si corresponde borrarlo
+                    if ($row[0] == "1")
+                    {
+                        $productoAActualizar->Borrar();
+                    }
+                    // Si corresponde actualizar el precio
+                    if ((double)$row[4] != $productoAActualizar->GetPrecio())
+                    {
+                        $productoAActualizar->ActualizarPrecio($row[4]);
+                    }
+                }
+            }
+            fclose($archivo);
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Importacion exitosa"));
             }
         }
         catch (Exception $e) 

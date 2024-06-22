@@ -8,8 +8,12 @@ require_once './models/usuario.php';
 enum ModoValidacionUsuarios
 {
     case Registro;
-    case Modificacion;
+    case Login;
+    case ModificacionUsername;
+    case ModificacionPass;
+    case ModificacionSector;
     case Borrado;
+    case LogsUsuario;
 }
 
 class ValidadorUsuariosMW
@@ -23,7 +27,19 @@ class ValidadorUsuariosMW
 
     public function __invoke(Request $request, RequestHandler $handler) 
     {
-        $parametros = $request->getParsedBody();
+        $method = $request->getMethod();
+
+        switch ($method) 
+        {
+            case 'POST':
+            case 'PUT':
+            case 'DELETE':
+                $parametros = $request->getParsedBody();
+                break;
+            case 'GET':
+                $parametros = $request->getQueryParams();
+                break;
+        }
 
         try
         {
@@ -32,11 +48,23 @@ class ValidadorUsuariosMW
                 case ModoValidacionUsuarios::Registro:
                     $this->validarParametrosRegistro($parametros);
                     break;
-                case ModoValidacionUsuarios::Modificacion:
-                    $this->validarParametrosModificacion($parametros);
+                case ModoValidacionUsuarios::Login:
+                    $this->validarParametrosLogin($parametros);
+                    break;
+                case ModoValidacionUsuarios::ModificacionUsername:
+                    $this->validarParametrosModificacionUsername($parametros);
+                    break;
+                case ModoValidacionUsuarios::ModificacionPass:
+                    $this->validarParametrosModificacionPass($parametros);
+                    break;
+                case ModoValidacionUsuarios::ModificacionSector:
+                    $this->validarParametrosModificacionSector($parametros);
                     break;
                 case ModoValidacionUsuarios::Borrado:
                     $this->validarParametrosBorrado($parametros);
+                    break;
+                case ModoValidacionUsuarios::LogsUsuario:
+                    $this->validarParametrosLogsUsuario($parametros);
                     break;
             }
 
@@ -70,16 +98,19 @@ class ValidadorUsuariosMW
         }
     }
 
-    private function validarParametrosModificacion($parametros)
+    private function validarParametrosLogin($parametros)
     {
-        if (!isset($parametros['username'], $parametros['pass'], $parametros['sector'], $parametros['usernameOriginal']))
+        if (!isset($parametros['username'], $parametros['pass']))
         {
             throw new Exception('Complete los parametros necesarios');
         }
+    }
 
-        if (!$this->PassEsValida($parametros['pass']) || !in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
+    private function validarParametrosModificacionUsername($parametros)
+    {
+        if (!isset($parametros['usernameNuevo'], $parametros['usernameOriginal']))
         {
-            throw new Exception('La contraseña no es valida o el sector no es válido');
+            throw new Exception('Complete los parametros necesarios');
         }
 
         if (!Usuario::UsuarioExiste($parametros['usernameOriginal']))
@@ -87,9 +118,45 @@ class ValidadorUsuariosMW
             throw new Exception('El usernameOriginal no existe');
         }
 
-        if (Usuario::UsuarioExiste($parametros['username']))
+        if (Usuario::UsuarioExiste($parametros['usernameNuevo']))
         {
             throw new Exception('El username ya existe');
+        }
+    }
+
+    private function validarParametrosModificacionPass($parametros)
+    {
+        if (!isset($parametros['username'], $parametros['pass']))
+        {
+            throw new Exception('Complete los parametros necesarios');
+        }
+
+        if (!$this->PassEsValida($parametros['pass']))
+        {
+            throw new Exception('La contraseña no es valida');
+        }
+
+        if (!Usuario::UsuarioExiste($parametros['username']))
+        {
+            throw new Exception('El username ingresado no existe');
+        }
+    }
+
+    private function validarParametrosModificacionSector($parametros)
+    {
+        if (!isset($parametros['username'], $parametros['sector']))
+        {
+            throw new Exception('Complete los parametros necesarios');
+        }
+
+        if (!in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
+        {
+            throw new Exception('La contraseña no es valida o el sector no es válido');
+        }
+
+        if (!Usuario::UsuarioExiste($parametros['username']))
+        {
+            throw new Exception('El username ingresado no existe');
         }
     }
 
@@ -105,6 +172,20 @@ class ValidadorUsuariosMW
             throw new Exception('El usuario a borrar no existe');
         }
     }
+
+    private function validarParametrosLogsUsuario($parametros)
+    {
+        if (!isset($parametros['username']))
+        {
+            throw new Exception('Complete los parametros necesarios');
+        }
+
+        if (!Usuario::UsuarioExiste($parametros['username']))
+        {
+            throw new Exception('El usuario ingresado no existe');
+        }
+    }
+
 
     private function PassEsValida($pass)
     {
