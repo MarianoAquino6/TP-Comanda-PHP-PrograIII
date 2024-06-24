@@ -47,6 +47,8 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 // Routes
 $app->group('/usuarios', function (RouteCollectorProxy $group) 
 {
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
     $group->get('[/]', \UsuarioController::class . ':ObtenerTodosLosUsuarios')
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
@@ -55,6 +57,8 @@ $app->group('/usuarios', function (RouteCollectorProxy $group)
     ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::LogsUsuario))
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
 
     $group->post('/registrar', \UsuarioController::class . ':RegistrarUsuario')
     ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Registro))
@@ -65,6 +69,8 @@ $app->group('/usuarios', function (RouteCollectorProxy $group)
     ->add(new LoggerMW)
     ->add(new JWTMW(ModoJWT::CrearToken))
     ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Login));
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     $group->put('/modificar-username', \UsuarioController::class . ':ModificarUsername')
     ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::ModificacionUsername))
@@ -81,6 +87,8 @@ $app->group('/usuarios', function (RouteCollectorProxy $group)
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
     $group->delete('/borrar', \UsuarioController::class . ':BorrarUsuario')
     ->add(new ValidadorUsuariosMW(ModoValidacionUsuarios::Borrado))
     ->add(new PermisosMW(["ADMIN"]))
@@ -89,6 +97,8 @@ $app->group('/usuarios', function (RouteCollectorProxy $group)
 
 $app->group('/mesas', function (RouteCollectorProxy $group) 
 {
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
     $group->get('[/]', \MesaController::class . ':ObtenerTodasLasMesasConEstados')
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
@@ -96,10 +106,53 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
+    $group->get('/menos-usada', \MesaController::class . ':ObtenerMesaMenosUsada')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/ordenar-segun-importe', \MesaController::class . ':ObtenerMesasOrdenadasPorImporte')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/mayor-facturacion', \MesaController::class . ':ObtenerMesaMayorFacturacion')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/menor-facturacion', \MesaController::class . ':ObtenerMesaMenorFacturacion')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/mayor-importe', \MesaController::class . ':ObtenerMesaMayorImporte')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/menor-importe', \MesaController::class . ':ObtenerMesaMenorImporte')
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/facturacion-fechas', \MesaController::class . ':ObtenerFacturacionEnPeriodo')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::FacturacionPeriodo))
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/mejores-comentarios', \MesaController::class . ':ObtenerMejoresComentarios')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::Comentarios))
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/peores-comentarios', \MesaController::class . ':ObtenerPeoresComentarios')
+    ->add(new ValidadorMesasMW(ModoValidacionMesas::Comentarios))
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
     $group->post('/registrar', \MesaController::class . ':RegistrarMesa')
     ->add(new ValidadorMesasMW(ModoValidacionMesas::Registro))
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     $group->put('/actualizar-estado', \MesaController::class . ':ActualizarEstadoMesa')
     ->add(new ValidadorMesasMW(ModoValidacionMesas::ActualizarEstado))
@@ -111,6 +164,8 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
     $group->delete('/borrar', \MesaController::class . ':BorrarMesa')
     ->add(new ValidadorMesasMW(ModoValidacionMesas::BorradoCerrar))
     ->add(new PermisosMW(["ADMIN"]))
@@ -119,32 +174,41 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
 
 $app->group('/productos', function (RouteCollectorProxy $group) 
 {
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
     $group->get('[/]', \ProductoController::class . ':ObtenerTodosLosProductos')
     ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
 
     $group->post('/registrar', \ProductoController::class . ':RegistrarProducto')
     ->add(new ValidadorProductosMW(ModoValidacionProductos::Registro))
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
+    
+    $group->post('/importar', \ProductoController::class . ':ImportarProductos')
+    ->add(new ValidadorProductosMW(ModoValidacionProductos::Importar))
+    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     $group->put('/actualizar-precio', \ProductoController::class . ':ActualizarPrecioProducto')
     ->add(new ValidadorProductosMW(ModoValidacionProductos::ActualizacionPrecio))
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
     $group->delete('/borrar', \ProductoController::class . ':BorrarProducto')
     ->add(new ValidadorProductosMW(ModoValidacionProductos::Borrado))
-    ->add(new PermisosMW(["ADMIN"]))
-    ->add(new JWTMW(ModoJWT::VerificarToken));
-
-    $group->post('/importar', \ProductoController::class . ':ImportarProductos')
-    ->add(new ValidadorProductosMW(ModoValidacionProductos::Importar))
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 });
 
 $app->group('/pedidos', function (RouteCollectorProxy $group) 
 {
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
     $group->get('[/]', \PedidoController::class . ':ObtenerTodosPedidosConEstados')
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
@@ -155,8 +219,12 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
     ->add(new PermisosMW(["CERVECERO", "BARTENDER", "COCINERO"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
-    $group->get('/obtener-pedidos-tomados', \PedidoController::class . ':ObtenerPedidosTomadosMozo')
+    $group->get('/obtener-pedidos-tomados-mozo', \PedidoController::class . ':ObtenerPedidosTomadosMozo')
     ->add(new PermisosMW(["MOZO"]))
+    ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    $group->get('/obtener-pedidos-tomados-empleado', \PedidoController::class . ':ObtenerPedidosTomadosEmpleado')
+    ->add(new PermisosMW(["CERVECERO", "BARTENDER", "COCINERO"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
     $group->get('/obtener-pedidos-listos', \PedidoController::class . ':ObtenerPedidosListosMozo')
@@ -195,6 +263,8 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
     // ->add(new PermisosMW(["MOZO", "ADMIN"]))
     // ->add(new JWTMW(ModoJWT::VerificarToken));
 
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
     $group->post('/registrar', \PedidoController::class . ':RegistrarPedidoYActualizarMesa')
     ->add(new ValidadorPedidosMW(ModoValidacionPedidos::Registro))
     ->add(new PermisosMW(["MOZO"]))
@@ -204,6 +274,8 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
     ->add(new ValidadorPedidosMW(ModoValidacionPedidos::Foto))
     ->add(new PermisosMW(["MOZO", "ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     $group->put('/tomar', \PedidoController::class . ':TomarPedido')
     ->add(new ValidadorPedidosMW(ModoValidacionPedidos::TomarPedido))
@@ -233,9 +305,13 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
 
 $app->group('/reseñas', function (RouteCollectorProxy $group) 
 {
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
     $group->get('/top', \ReseñaController::class . ':ObtenerMejoresComentariosMesas')
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
 
     $group->post('/registrar', \ReseñaController::class . ':RegistrarReseña')
     ->add(new ValidadorReseñasMW(ModoValidacionReseñas::Registro));
@@ -243,7 +319,7 @@ $app->group('/reseñas', function (RouteCollectorProxy $group)
 
 $app->get('[/]', function (Request $request, Response $response) 
 {    
-    $payload = json_encode(array("mensaje" => "Slim Framework 4 PHP"));
+    $payload = json_encode(array("mensaje" => "Bienvenido a la comanda papaaa"));
     
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json');

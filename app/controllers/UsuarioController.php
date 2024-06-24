@@ -11,6 +11,44 @@ class UsuarioController
         return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
     }
 
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
+    public function ObtenerTodosLosUsuarios($request, $response, $args)
+    {
+        try
+        {
+            $lista = Usuario::ObtenerTodos();
+            return $this->CrearRespuesta($response, ["listaUsuarios" => $lista]);
+        }
+        catch (Exception $e)
+        {
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
+        }
+    }
+
+    public function ObtenerLogsDeUsuario($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getQueryParams();
+
+            $loginsUsuario = Usuario::ObtenerLoginsDeUsuario($parametros['username']);
+
+            if (!$loginsUsuario)
+            {
+                throw new Exception("El usuario nunca ha ingresado al sistema");
+            }
+
+            return $this->CrearRespuesta($response, array("logsDelUsuario" => $loginsUsuario));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
     public function Login($request, $response, $args)
     {
         try
@@ -61,18 +99,7 @@ class UsuarioController
         }
     }
 
-    public function ObtenerTodosLosUsuarios($request, $response, $args)
-    {
-        try
-        {
-            $lista = Usuario::ObtenerTodos();
-            return $this->CrearRespuesta($response, ["listaUsuarios" => $lista]);
-        }
-        catch (Exception $e)
-        {
-            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
-        }
-    }
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     public function ModificarUsername($request, $response, $args)
     {
@@ -143,6 +170,8 @@ class UsuarioController
         }
     }
 
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
     public function BorrarUsuario($request, $response, $args)
     {
         try
@@ -163,27 +192,6 @@ class UsuarioController
         catch (Exception $e) 
         {
             return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
-        }
-    }
-
-    public function ObtenerLogsDeUsuario($request, $response, $args)
-    {
-        try
-        {
-            $parametros = $request->getQueryParams();
-
-            $loginsUsuario = Usuario::ObtenerLoginsDeUsuario($parametros['username']);
-
-            if (!$loginsUsuario)
-            {
-                throw new Exception("El usuario nunca ha ingresado al sistema");
-            }
-
-            return $this->CrearRespuesta($response, array("logsDelUsuario" => $loginsUsuario));
-        } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
     }
 }

@@ -27,73 +27,81 @@ class Producto
         return $this->_precio;
     }
 
+    ///////////////////////////////////////////// CREATE ///////////////////////////////////////////////////////////
+
     public function Registrar()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "INSERT INTO 
-                    productos (is_deleted, tipo, codigo, nombre, precio, fecha_creacion, fecha_modificacion)
-                    VALUES (0, :tipo, :codigo, :nombre, :precio, :fecha_creacion, :fecha_modificacion)";
-        $queryPreparada = $acceso->PrepararConsulta($query);
+                productos (is_deleted, tipo, codigo, nombre, precio, fecha_creacion, fecha_modificacion)
+                VALUES (0, :tipo, :codigo, :nombre, :precio, :fecha_creacion, :fecha_modificacion)";
+    
+        $parametros = [
+            ':tipo' => $this->_tipo,
+            ':codigo' => $this->_codigo,
+            ':nombre' => $this->_nombre,
+            ':precio' => $this->_precio,
+            ':fecha_creacion' => date('Y-m-d H:i:s'),
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
 
-        $fechaCreacion = date('Y-m-d H:i:s');
-
-        $queryPreparada->bindParam(':tipo', $this->_tipo, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':nombre', $this->_nombre, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':precio', $this->_precio, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_creacion', $fechaCreacion, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaCreacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
 
+    ///////////////////////////////////////////// UPDATE ///////////////////////////////////////////////////////////
+
+    public function ActualizarPrecio($precio)
+    {
+        $this->_precio = $precio;
+
+        $query = "UPDATE productos SET precio = :precio, fecha_modificacion = :fecha_modificacion 
+                    WHERE codigo = :codigo AND is_deleted = 0";
+        $parametros = [
+            ':codigo' => $this->_codigo,
+            ':precio' => $this->_precio,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    ///////////////////////////////////////////// DELETE ///////////////////////////////////////////////////////////
+
+    public function Borrar()
+    {
+        $query = "UPDATE productos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion WHERE codigo = :codigo";
+        $parametros = [
+            ':codigo' => $this->_codigo,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    /////////////////////////////////////////////  READ  ///////////////////////////////////////////////////////////
     public static function ProductoExiste($codigo)
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT codigo FROM productos WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
-        $queryPreparada->execute();
+        $parametros = [':codigo' => $codigo];
 
-        $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
-
-        if ($resultado != false)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
+        return $resultado->fetch(PDO::FETCH_ASSOC) != false;
     }
 
     public static function ObtenerTodos()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT tipo, codigo, nombre, precio, fecha_creacion, fecha_modificacion 
-                    FROM productos WHERE is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
+                FROM productos WHERE is_deleted = 0";
 
-        $queryPreparada->execute();
-
-        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+        return AccesoDatos::EjecutarConsultaSelect($query, [])->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function ObtenerUno($codigoProducto)
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT tipo, codigo, nombre, precio, id FROM productos 
-                    WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
+                WHERE codigo = :codigo AND is_deleted = 0";
+        $parametros = [':codigo' => $codigoProducto];
 
-        $queryPreparada->bindParam(':codigo', $codigoProducto, PDO::PARAM_STR);
-        $queryPreparada->execute();
-
-        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+        $fila = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC);
 
         if ($fila) 
         {
@@ -103,37 +111,5 @@ class Producto
         {
             return null;
         }
-    }
-
-    public function ActualizarPrecio($precio)
-    {
-        $this->_precio = $precio;
-        $acceso = AccesoDatos::ObtenerInstancia();
-
-        $query = "UPDATE productos SET precio = :precio, fecha_modificacion = :fecha_modificacion 
-                    WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-
-        $fechaModificacion = date('Y-m-d H:i:s');
-
-        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':precio', $this->_precio, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
-    }
-
-    public function Borrar()
-    {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
-        $query = "UPDATE productos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion WHERE codigo = :codigo";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-
-        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
-        $fechaModificacion = date('Y-m-d H:i:s');
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
     }
 }

@@ -3,40 +3,48 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 
-require_once './models/mesa.php';
+require_once './validadoresInputs/validadorInputMesas.php';
 
 enum ModoValidacionMesas
 {
     case ActualizarEstado;
     case Registro;
     case BorradoCerrar;
+    case FacturacionPeriodo;
+    case Comentarios;
 }
 
 class ValidadorMesasMW
 {
-    public $modoValidacion;
+    private $_modoValidacion;
+    private $_validador;
 
     public function __construct($modoValidacion)
     {
-        $this->modoValidacion = $modoValidacion;
+        $this->_modoValidacion = $modoValidacion;
+        $this->_validador = new ValidadorInputMesas();
     }
 
     public function __invoke(Request $request, RequestHandler $handler) 
     {
-        $parametros = $request->getParsedBody();
+        $parametros = $this->getRequestParameters($request);
 
         try
         {
-            switch ($this->modoValidacion)
+            switch ($this->_modoValidacion)
             {
                 case ModoValidacionMesas::ActualizarEstado:
-                    $this->validarParametrosActualizarEstado($parametros);
+                    $this->_validador->validarParametrosActualizarEstado($parametros);
                     break;
                 case ModoValidacionMesas::Registro:
-                    $this->validarParametrosRegistro($parametros);
+                    $this->_validador->validarParametrosRegistro($parametros);
                     break;
+                case ModoValidacionMesas::Comentarios:
                 case ModoValidacionMesas::BorradoCerrar:
-                    $this->validarParametrosBorradoCerrar($parametros);
+                    $this->_validador->validarParametrosBorradoCerrar($parametros);
+                    break;
+                case ModoValidacionMesas::FacturacionPeriodo:
+                    $this->_validador->validarParametrosFacturacionPeriodo($parametros);
                     break;
             }
 
@@ -52,47 +60,16 @@ class ValidadorMesasMW
         return $response;
     }
 
-    private function validarParametrosActualizarEstado($parametros)
+    private function getRequestParameters(Request $request)
     {
-        if (!isset($parametros['codigo'], $parametros['estado']))
+        switch ($request->getMethod()) 
         {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!in_array($parametros['estado'], ['Con cliente esperando pedido', 'Con cliente comiendo', 'Con cliente pagando']))
-        {
-            throw new Exception('Formato de datos no valido');
-        }
-
-        if (!Mesa::MesaExiste($parametros['codigo']))
-        {
-            throw new Exception('La mesa indicada no existe');
-        }
-    }
-
-    private function validarParametrosRegistro($parametros)
-    {
-        if (!isset($parametros['codigo']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (Mesa::MesaExiste($parametros['codigo']))
-        {
-            throw new Exception('La mesa indicada ya existe');
-        }
-    }
-
-    private function validarParametrosBorradoCerrar($parametros)
-    {
-        if (!isset($parametros['codigo']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Mesa::MesaExiste($parametros['codigo']))
-        {
-            throw new Exception('La mesa indicada no existe');
+            case 'POST':
+            case 'PUT':
+            case 'DELETE':
+                return $request->getParsedBody();
+            case 'GET':
+                return $request->getQueryParams();
         }
     }
 }

@@ -3,7 +3,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 
-require_once './models/usuario.php';
+require_once './validadoresInputs/validadorInputUsuarios.php';
 
 enum ModoValidacionUsuarios
 {
@@ -18,11 +18,13 @@ enum ModoValidacionUsuarios
 
 class ValidadorUsuariosMW
 {
-    public $modoValidacion;
+    private $_modoValidacion;
+    private $_validador;
 
     public function __construct($modoValidacion)
     {
-        $this->modoValidacion = $modoValidacion;
+        $this->_modoValidacion = $modoValidacion;
+        $this->_validador = new ValidadorInputUsuarios();
     }
 
     public function __invoke(Request $request, RequestHandler $handler) 
@@ -43,28 +45,28 @@ class ValidadorUsuariosMW
 
         try
         {
-            switch ($this->modoValidacion)
+            switch ($this->_modoValidacion)
             {
                 case ModoValidacionUsuarios::Registro:
-                    $this->validarParametrosRegistro($parametros);
+                    $this->_validador->validarParametrosRegistro($parametros);
                     break;
                 case ModoValidacionUsuarios::Login:
-                    $this->validarParametrosLogin($parametros);
+                    $this->_validador->validarParametrosLogin($parametros);
                     break;
                 case ModoValidacionUsuarios::ModificacionUsername:
-                    $this->validarParametrosModificacionUsername($parametros);
+                    $this->_validador->validarParametrosModificacionUsername($parametros);
                     break;
                 case ModoValidacionUsuarios::ModificacionPass:
-                    $this->validarParametrosModificacionPass($parametros);
+                    $this->_validador->validarParametrosModificacionPass($parametros);
                     break;
                 case ModoValidacionUsuarios::ModificacionSector:
-                    $this->validarParametrosModificacionSector($parametros);
+                    $this->_validador->validarParametrosModificacionSector($parametros);
                     break;
                 case ModoValidacionUsuarios::Borrado:
-                    $this->validarParametrosBorrado($parametros);
+                    $this->_validador->validarParametrosBorrado($parametros);
                     break;
                 case ModoValidacionUsuarios::LogsUsuario:
-                    $this->validarParametrosLogsUsuario($parametros);
+                    $this->_validador->validarParametrosLogsUsuario($parametros);
                     break;
             }
 
@@ -78,127 +80,5 @@ class ValidadorUsuariosMW
         }
 
         return $response;
-    }
-
-    private function validarParametrosRegistro($parametros)
-    {
-        if (!isset($parametros['username'], $parametros['pass'], $parametros['sector']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!$this->PassEsValida($parametros['pass']) || !in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
-        {
-            throw new Exception('Formato de datos no valido');
-        }
-
-        if (Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El username ya existe');
-        }
-    }
-
-    private function validarParametrosLogin($parametros)
-    {
-        if (!isset($parametros['username'], $parametros['pass']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-    }
-
-    private function validarParametrosModificacionUsername($parametros)
-    {
-        if (!isset($parametros['usernameNuevo'], $parametros['usernameOriginal']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['usernameOriginal']))
-        {
-            throw new Exception('El usernameOriginal no existe');
-        }
-
-        if (Usuario::UsuarioExiste($parametros['usernameNuevo']))
-        {
-            throw new Exception('El username ya existe');
-        }
-    }
-
-    private function validarParametrosModificacionPass($parametros)
-    {
-        if (!isset($parametros['username'], $parametros['pass']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!$this->PassEsValida($parametros['pass']))
-        {
-            throw new Exception('La contraseña no es valida');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El username ingresado no existe');
-        }
-    }
-
-    private function validarParametrosModificacionSector($parametros)
-    {
-        if (!isset($parametros['username'], $parametros['sector']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
-        {
-            throw new Exception('La contraseña no es valida o el sector no es válido');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El username ingresado no existe');
-        }
-    }
-
-    private function validarParametrosBorrado($parametros)
-    {
-        if (!isset($parametros['username']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El usuario a borrar no existe');
-        }
-    }
-
-    private function validarParametrosLogsUsuario($parametros)
-    {
-        if (!isset($parametros['username']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El usuario ingresado no existe');
-        }
-    }
-
-
-    private function PassEsValida($pass)
-    {
-        // Longitud entre 4 y 10 caracteres
-        if (strlen($pass) < 4 || strlen($pass) > 10) {
-            return false;
-        }
-    
-        // Al menos una minúscula, una mayúscula y un número
-        if (!preg_match('/[a-z]/', $pass) || !preg_match('/[A-Z]/', $pass) || !preg_match('/[0-9]/', $pass)) {
-            return false;
-        }
-    
-        return true;
     }
 }

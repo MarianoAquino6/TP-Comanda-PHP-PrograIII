@@ -16,110 +16,7 @@ class PedidoController
         return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
     }
 
-    public function RegistrarPedidoYActualizarMesa($request, $response, $args)
-    {
-        try 
-        {
-            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
-            $data = JWTHandler::ObtenerData($tokenRecibido);
-            $username = $data->username;
-            $parametros = $request->getParsedBody();
-
-            $mesa = Mesa::ObtenerUno($parametros['codigoMesa']);
-            $mozo = Usuario::ObtenerUno($username);
-            $codigoPedido = substr(bin2hex(random_bytes(6)), 0, 6);
-
-            $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente']);
-            $idPedido = $nuevoPedido->RegistrarYDevolverId();
-
-            foreach ($parametros['productos'] as $producto) 
-            {
-                $objetoProducto = Producto::ObtenerUno($producto['codigo']);
-                $cantidad = $producto['cantidad'];
-
-                for ($i = 0; $i < $cantidad; $i++) 
-                {
-                    $pedidoProducto = new PedidoProducto($idPedido, $objetoProducto->GetId(), "Pendiente");
-                    $pedidoProducto->Registrar();
-                }
-            }
-    
-            if ($idPedido != false) 
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido creado con exito, el codigo es ". $nuevoPedido->GetCodigo()));
-            }
-            else
-            {
-                throw new Exception("Ha surgido un error al crear el pedido");
-            }
-        } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function TomarPedido($request, $response, $args)
-    {
-        try
-        {
-            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
-            $data = JWTHandler::ObtenerData($tokenRecibido);
-            $username = $data->username;
-            $parametros = $request->getParsedBody();
-
-            $empleado = Usuario::ObtenerUno($username);
-            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
-            $producto = Producto::ObtenerUno($parametros['codigoProducto']);
-            $pedidoProductoDisponible = PedidoProducto::ObtenerPedidoProductoDisponible($pedido->GetId(), $producto->GetId());
-
-            $resultado = $pedidoProductoDisponible->TomarPedido($empleado->GetId(), $parametros['tiempoEstimado']);
-
-            if ($resultado)
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido tomado con exito"));
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al tomar el pedido");
-            }
-        }
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function TerminarPedido($request, $response, $args)
-    {
-        try
-        {
-            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
-            $data = JWTHandler::ObtenerData($tokenRecibido);
-            $username = $data->username;
-            $parametros = $request->getParsedBody();
-
-            $empleado = Usuario::ObtenerUno($username);
-            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
-            $producto = Producto::ObtenerUno($parametros['codigoProducto']);
-            $pedidoProductoEnPreparacion = PedidoProducto::ObtenerPedidoProductoEnPreparacion($pedido->GetId(), $producto->GetId(), $empleado->GetId());
-
-            $resultado = $pedidoProductoEnPreparacion->TerminarPedido();
-
-            if ($resultado) 
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Pedido terminado con exito"));
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al terminar el pedido");
-            }
-        }
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
 
     public function ObtenerPedidosPendientesSegunSector($request, $response, $args)
     {
@@ -174,6 +71,25 @@ class PedidoController
         }
     }
 
+    public function ObtenerPedidosTomadosEmpleado($request, $response, $args)
+    {
+        try 
+        {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
+
+            $usuario = Usuario::ObtenerUno($username);
+            $pedidosTomados = PedidoProducto::ObtenerPedidosTomadosEmpleado($usuario->GetId());
+
+            return $this->CrearRespuesta($response, array("listaPedidosTomados" => $pedidosTomados));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
     public function ObtenerPedidosListosMozo($request, $response, $args)
     {
         try 
@@ -201,30 +117,6 @@ class PedidoController
 
             return $this->CrearRespuesta($response, array("listaPedidosEstados" => $pedidosConEstados));
         } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function CobrarMesa($request, $response, $args)
-    {
-        try
-        {
-            $parametros = $request->getParsedBody();
-
-            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
-            $resultado = $pedido->ActualizarImporteTotal();
-
-            if ($resultado) 
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Importe total actualizado con exito"));
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al actualizar el importe total");
-            }
-        }
         catch (Exception $e) 
         {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
@@ -374,6 +266,91 @@ class PedidoController
         }
     }
 
+    public function ObtenerPedidosCancelados($request, $response, $args)
+    {
+        try
+        {
+            $resultado = PedidoProducto::ObtenerPedidosCancelados();
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("Pedidos Cancelados" => $resultado));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al obtener los pedidos cancelados");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    // public function ObtenerFotosPedidos($request, $response, $args)
+    // {
+    //     try 
+    //     {
+    //         $fotosPedidos = Pedido::ObtenerFotosClientes();
+
+    //         if (!$fotosPedidos)
+    //         {
+    //             throw new Exception("No hay fotos vinculadas");
+    //         }
+
+    //         return $this->CrearRespuesta($response, array("fotosClientes" => $fotosPedidos));
+    //     } 
+    //     catch (Exception $e) 
+    //     {
+    //         return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+    //     }
+    // }
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
+    public function RegistrarPedidoYActualizarMesa($request, $response, $args)
+    {
+        try 
+        {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
+            $parametros = $request->getParsedBody();
+
+            $mesa = Mesa::ObtenerUno($parametros['codigoMesa']);
+            $mozo = Usuario::ObtenerUno($username);
+            $codigoPedido = substr(bin2hex(random_bytes(6)), 0, 6);
+
+            $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente']);
+            $idPedido = $nuevoPedido->RegistrarYDevolverId();
+
+            foreach ($parametros['productos'] as $producto) 
+            {
+                $objetoProducto = Producto::ObtenerUno($producto['codigo']);
+                $cantidad = $producto['cantidad'];
+
+                for ($i = 0; $i < $cantidad; $i++) 
+                {
+                    $pedidoProducto = new PedidoProducto($idPedido, $objetoProducto->GetId(), "Pendiente");
+                    $pedidoProducto->Registrar();
+                }
+            }
+    
+            if ($idPedido != false) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido creado con exito, el codigo es ". $nuevoPedido->GetCodigo()));
+            }
+            else
+            {
+                throw new Exception("Ha surgido un error al crear el pedido");
+            }
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
     public function VincularFoto($request, $response, $args)
     {
         try
@@ -392,6 +369,94 @@ class PedidoController
             else 
             {
                 throw new Exception("Ha surgido un error al vincular la foto");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
+
+    public function TomarPedido($request, $response, $args)
+    {
+        try
+        {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
+            $parametros = $request->getParsedBody();
+
+            $empleado = Usuario::ObtenerUno($username);
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $producto = Producto::ObtenerUno($parametros['codigoProducto']);
+            $pedidoProductoDisponible = PedidoProducto::ObtenerPedidoProductoDisponible($pedido->GetId(), $producto->GetId());
+
+            $resultado = $pedidoProductoDisponible->TomarPedido($empleado->GetId(), $parametros['tiempoEstimado']);
+
+            if ($resultado)
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido tomado con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al tomar el pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function TerminarPedido($request, $response, $args)
+    {
+        try
+        {
+            $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
+            $data = JWTHandler::ObtenerData($tokenRecibido);
+            $username = $data->username;
+            $parametros = $request->getParsedBody();
+
+            $empleado = Usuario::ObtenerUno($username);
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $producto = Producto::ObtenerUno($parametros['codigoProducto']);
+            $pedidoProductoEnPreparacion = PedidoProducto::ObtenerPedidoProductoEnPreparacion($pedido->GetId(), $producto->GetId(), $empleado->GetId());
+
+            $resultado = $pedidoProductoEnPreparacion->TerminarPedido();
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Pedido terminado con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al terminar el pedido");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function CobrarMesa($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+
+            $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
+            $resultado = $pedido->ActualizarImporteTotal();
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Importe total actualizado con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al actualizar el importe total");
             }
         }
         catch (Exception $e) 
@@ -448,44 +513,4 @@ class PedidoController
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
     }
-
-    public function ObtenerPedidosCancelados($request, $response, $args)
-    {
-        try
-        {
-            $resultado = PedidoProducto::ObtenerPedidosCancelados();
-
-            if ($resultado) 
-            {
-                return $this->CrearRespuesta($response, array("Pedidos Cancelados" => $resultado));
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al obtener los pedidos cancelados");
-            }
-        }
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    // public function ObtenerFotosPedidos($request, $response, $args)
-    // {
-    //     try 
-    //     {
-    //         $fotosPedidos = Pedido::ObtenerFotosClientes();
-
-    //         if (!$fotosPedidos)
-    //         {
-    //             throw new Exception("No hay fotos vinculadas");
-    //         }
-
-    //         return $this->CrearRespuesta($response, array("fotosClientes" => $fotosPedidos));
-    //     } 
-    //     catch (Exception $e) 
-    //     {
-    //         return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-    //     }
-    // }
 }

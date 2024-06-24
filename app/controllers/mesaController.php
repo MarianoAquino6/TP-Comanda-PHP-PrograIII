@@ -2,6 +2,7 @@
 
 require_once './models/mesa.php';
 require_once './models/pedido.php';
+require_once './models/reseña.php';
 
 class MesaController
 {
@@ -12,22 +13,117 @@ class MesaController
         return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
     }
 
-    public function RegistrarMesa($request, $response, $args)
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
+    public function ObtenerTodasLasMesasConEstados($request, $response, $args)
     {
         try 
         {
-            $parametros = $request->getParsedBody();
-    
-            $nuevaMesa = new Mesa($parametros['codigo'], "Cerrada");
-            $resultado = $nuevaMesa->Registrar();
-    
-            if ($resultado) 
+            $lista = Mesa::ObtenerListadoMesasConEstados();
+            return $this->CrearRespuesta($response, array("listaMesasConEstados" => $lista));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMasUsada($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMasUsada();
+            return $this->CrearRespuesta($response, array("mesaMasUsada" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMenosUsada($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMenosUsada();
+            return $this->CrearRespuesta($response, array("mesaMenosUsada" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMayorFacturacion($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMayorFacturacion();
+            return $this->CrearRespuesta($response, array("mesaMayorFacturacion" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMenorFacturacion($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMenorFacturacion();
+            return $this->CrearRespuesta($response, array("mesaMenorFacturacion" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMayorImporte($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMayorImporte();
+            return $this->CrearRespuesta($response, array("mesaMayorImporte" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesaMenorImporte($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesaMenorImporte();
+            return $this->CrearRespuesta($response, array("mesaMenorImporte" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerFacturacionEnPeriodo($request, $response, $args)
+    {
+        try 
+        {
+            $parametros = $request->getQueryParams();
+            $codigoMesa = $parametros['codigoMesa'];
+            $fechaDesde = $parametros['fechaDesde'];
+            $fechaHasta = $parametros['fechaHasta'];
+
+            $mesaMasUsada = Mesa::ObtenerFacturacionEnPeriodo($codigoMesa, $fechaDesde, $fechaHasta);
+
+            if ($mesaMasUsada)
             {
-                return $this->CrearRespuesta($response, array("mensaje" => "Mesa creada con exito"));
-            } 
-            else 
+                return $this->CrearRespuesta($response, array("facturacion" => $mesaMasUsada));
+            }
+            else
             {
-                throw new Exception("Ha surgido un error al crear la mesa");
+                return $this->CrearRespuesta($response, array("facturacion" => "No existen pedidos correspondientes a la mesa para las fechas ingresadas"));
             }
         } 
         catch (Exception $e) 
@@ -35,6 +131,95 @@ class MesaController
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
     }
+
+    public function ObtenerMejoresComentarios($request, $response, $args)
+    {
+        try 
+        {
+            $parametros = $request->getQueryParams();
+            $codigoMesa = $parametros['codigo'];
+
+            $mejoresComentarios = Reseña::ObtenerMejoresComentariosDeMesa($codigoMesa);
+
+            if ($mejoresComentarios)
+            {
+                return $this->CrearRespuesta($response, array("mejoresComentarios" => $mejoresComentarios));
+            }
+            else
+            {
+                return $this->CrearRespuesta($response, array("mejoresComentarios" => "No existen comentarios para la mesa ingresada"));
+            }
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerPeoresComentarios($request, $response, $args)
+    {
+        try 
+        {
+            $parametros = $request->getQueryParams();
+            $codigoMesa = $parametros['codigo'];
+
+            $peoresComentarios = Reseña::ObtenerPeoresComentariosDeMesa($codigoMesa);
+
+            if ($peoresComentarios)
+            {
+                return $this->CrearRespuesta($response, array("peoresComentarios" => $peoresComentarios));
+            }
+            else
+            {
+                return $this->CrearRespuesta($response, array("peoresComentarios" => "No existen comentarios para la mesa ingresada"));
+            }
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerMesasOrdenadasPorImporte($request, $response, $args)
+    {
+        try 
+        {
+            $mesaMasUsada = Mesa::ObtenerMesasOrdenadasPorImporte();
+            return $this->CrearRespuesta($response, array("mesasOrdenadasSegunImporte" => $mesaMasUsada));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
+    public function RegistrarMesa($request, $response, $args)
+        {
+            try 
+            {
+                $parametros = $request->getParsedBody();
+        
+                $nuevaMesa = new Mesa($parametros['codigo'], "Cerrada");
+                $resultado = $nuevaMesa->Registrar();
+        
+                if ($resultado) 
+                {
+                    return $this->CrearRespuesta($response, array("mensaje" => "Mesa creada con exito"));
+                } 
+                else 
+                {
+                    throw new Exception("Ha surgido un error al crear la mesa");
+                }
+            } 
+            catch (Exception $e) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+            }
+        }
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
 
     public function ActualizarEstadoMesa($request, $response, $args)
     {
@@ -84,12 +269,15 @@ class MesaController
         }
     }
 
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
     public function BorrarMesa($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-            $resultado = Mesa::Borrar($parametros['codigo']);
+            $mesaABorrar = Mesa::ObtenerUno($parametros['codigo']);
+            $resultado = $mesaABorrar->Borrar();
 
             if ($resultado)
             {
@@ -100,32 +288,6 @@ class MesaController
                 throw new Exception("Ha surgido un error al borrar la mesa");
             }
         }
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function ObtenerTodasLasMesasConEstados($request, $response, $args)
-    {
-        try 
-        {
-            $lista = Mesa::ObtenerListadoMesasConEstados();
-            return $this->CrearRespuesta($response, array("listaMesasConEstados" => $lista));
-        } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function ObtenerMesaMasUsada($request, $response, $args)
-    {
-        try 
-        {
-            $mesaMasUsada = Mesa::ObtenerMesaMasUsada();
-            return $this->CrearRespuesta($response, array("mesaMasUsada" => $mesaMasUsada));
-        } 
         catch (Exception $e) 
         {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);

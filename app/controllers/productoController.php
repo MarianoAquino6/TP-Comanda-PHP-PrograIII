@@ -11,6 +11,23 @@ class ProductoController
         return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
     }
 
+    //////////////////////////////////////////// GET /////////////////////////////////////////////////
+
+    public function ObtenerTodosLosProductos($request, $response, $args)
+    {
+        try 
+        {
+            $lista = Producto::ObtenerTodos();
+            return $this->CrearRespuesta($response, array("listaProductos" => $lista));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// POST /////////////////////////////////////////////////
+
     public function RegistrarProducto($request, $response, $args)
     {
         try 
@@ -29,65 +46,6 @@ class ProductoController
                 throw new Exception("Ha surgido un error al crear el producto");
             }
         } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function ObtenerTodosLosProductos($request, $response, $args)
-    {
-        try 
-        {
-            $lista = Producto::ObtenerTodos();
-            return $this->CrearRespuesta($response, array("listaProductos" => $lista));
-        } 
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function ActualizarPrecioProducto($request, $response, $args)
-    {
-        try
-        {
-            $parametros = $request->getParsedBody();
-            $productoAActualizar = Producto::ObtenerUno($parametros['codigo']);
-            $resultado = $productoAActualizar->ActualizarPrecio($parametros['precio']);
-
-            if ($resultado) 
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Precio actualizado con exito"));
-            } 
-            else 
-            {
-                throw new Exception("Ha surgido un error al actualizar el precio");
-            }
-        }
-        catch (Exception $e) 
-        {
-            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-        }
-    }
-
-    public function BorrarProducto($request, $response, $args)
-    {
-        try
-        {
-            $parametros = $request->getParsedBody();
-            $productoABorrar = Producto::ObtenerUno($parametros['codigo']);
-            $resultado = $productoABorrar->Borrar();
-
-            if ($resultado)
-            {
-                return $this->CrearRespuesta($response, array("mensaje" => "Producto borrado con exito"));
-            }
-            else
-            {
-                throw new Exception("Ha surgido un error al borrar el producto");
-            }
-        }
         catch (Exception $e) 
         {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
@@ -132,6 +90,56 @@ class ProductoController
             if ($resultado) 
             {
                 return $this->CrearRespuesta($response, array("mensaje" => "Importacion exitosa"));
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// PUT /////////////////////////////////////////////////
+
+    public function ActualizarPrecioProducto($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+            $productoAActualizar = Producto::ObtenerUno($parametros['codigo']);
+            $resultado = $productoAActualizar->ActualizarPrecio($parametros['precio']);
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Precio actualizado con exito"));
+            } 
+            else 
+            {
+                throw new Exception("Ha surgido un error al actualizar el precio");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    //////////////////////////////////////////// DELETE /////////////////////////////////////////////////
+
+    public function BorrarProducto($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+            $productoABorrar = Producto::ObtenerUno($parametros['codigo']);
+            $resultado = $productoABorrar->Borrar();
+
+            if ($resultado)
+            {
+                return $this->CrearRespuesta($response, array("mensaje" => "Producto borrado con exito"));
+            }
+            else
+            {
+                throw new Exception("Ha surgido un error al borrar el producto");
             }
         }
         catch (Exception $e) 

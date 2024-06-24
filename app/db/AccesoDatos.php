@@ -1,4 +1,5 @@
 <?php
+
 class AccesoDatos
 {
     private static $objAccesoDatos;
@@ -35,6 +36,62 @@ class AccesoDatos
     public function ObtenerUltimoId()
     {
         return $this->objetoPDO->lastInsertId();
+    }
+
+    public static function EjecutarConsultaIUDYDevolverId($query, $parametros)
+    {
+        $acceso = self::ObtenerInstancia();
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        
+        foreach ($parametros as $nombre => $valor) 
+        {
+            // Si es INT se establece con PARAM_INT, de lo contrario PARAM_STR
+            $tipo = is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $queryPreparada->bindValue($nombre, $valor, $tipo);
+        }
+
+        // Devuelvo un bool de acuerdo a la ejecucion
+        $resultado = $queryPreparada->execute();
+
+        if ($resultado) {
+            return $acceso->ObtenerUltimoId();
+        } else {
+            return $resultado;
+        }
+    }
+
+    public static function EjecutarConsultaIUD($query, $parametros)
+    {
+        $acceso = self::ObtenerInstancia();
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        
+        foreach ($parametros as $nombre => $valor) 
+        {
+            // Si es INT se establece con PARAM_INT, de lo contrario PARAM_STR
+            $tipo = is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $queryPreparada->bindValue($nombre, $valor, $tipo);
+        }
+
+        // Devuelvo un bool de acuerdo a la ejecucion
+        return $queryPreparada->execute();
+    }
+
+    public static function EjecutarConsultaSelect($query, $parametros)
+    {
+        $acceso = self::ObtenerInstancia();
+        $queryPreparada = $acceso->PrepararConsulta($query);
+        
+        foreach ($parametros as $nombre => $valor) 
+        {
+            // Si es INT se establece con PARAM_INT, de lo contrario PARAM_STR
+            $tipo = is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $queryPreparada->bindValue($nombre, $valor, $tipo);
+        }
+
+        $queryPreparada->execute();
+
+        // Devuelvo la query preparada y ejecutada
+        return $queryPreparada;
     }
 
     public function __clone()

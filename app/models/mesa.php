@@ -18,37 +18,71 @@ class Mesa
         return $this->_id;
     }
 
+    ///////////////////////////////////////////// CREATE ///////////////////////////////////////////////////////////
+
     public function Registrar()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "INSERT INTO 
-                    mesas (is_deleted, codigo, estado, fecha_creacion, fecha_modificacion)
-                    VALUES (0, :codigo, :estado, :fecha_creacion, :fecha_modificacion)";
-        $queryPreparada = $acceso->PrepararConsulta($query);
+                mesas (is_deleted, codigo, estado, fecha_creacion, fecha_modificacion)
+                VALUES (0, :codigo, :estado, :fecha_creacion, :fecha_modificacion)";
 
-        $fechaCreacion = date('Y-m-d H:i:s');
+        $parametros = array(
+            ':codigo' => $this->_codigo,
+            ':estado' => $this->_estado,
+            ':fecha_creacion' => date('Y-m-d H:i:s'),
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        );
 
-        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':estado', $this->_estado, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_creacion', $fechaCreacion, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaCreacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
+
+    ///////////////////////////////////////////// UPDATE ///////////////////////////////////////////////////////////
+
+    public function ActualizarEstado($estado)
+    {
+        $this->_estado = $estado;
+
+        $query = "UPDATE mesas 
+                    SET estado = :estado, fecha_modificacion = :fecha_modificacion 
+                    WHERE codigo = :codigo AND is_deleted = 0";
+
+        $parametros = array(
+            ':codigo' => $this->_codigo,
+            ':estado' => $this->_estado,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        );
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    ///////////////////////////////////////////// DELETE ///////////////////////////////////////////////////////////
+
+    public function Borrar()
+    {
+        $query = "UPDATE mesas 
+                SET is_deleted = 1, fecha_modificacion = :fecha_modificacion 
+                WHERE codigo = :codigo";
+
+        $parametros = array(
+            ':codigo' => $this->_codigo,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        );
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    ///////////////////////////////////////////// READ ///////////////////////////////////////////////////////////
 
     public static function ObtenerUno($codigoMesa)
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT codigo, estado, id 
-                    FROM mesas 
-                    WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->bindParam(':codigo', $codigoMesa, PDO::PARAM_STR);
-        $queryPreparada->execute();
+                FROM mesas 
+                WHERE codigo = :codigo AND is_deleted = 0";
 
-        $fila = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+        $parametros = array(':codigo' => $codigoMesa);
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
+        $fila = $resultado->fetch(PDO::FETCH_ASSOC);
 
         if ($fila) 
         {
@@ -60,87 +94,144 @@ class Mesa
         }
     }
 
-    public function ActualizarEstado($estado)
-    {
-        $this->_estado = $estado;
-        $acceso = AccesoDatos::ObtenerInstancia();
-
-        $query = "UPDATE mesas 
-                    SET estado = :estado, fecha_modificacion = :fecha_modificacion 
-                    WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-
-        $fechaModificacion = date('Y-m-d H:i:s');
-
-        $queryPreparada->bindParam(':codigo', $this->_codigo, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':estado', $this->_estado, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
-    }
-
-    public static function Borrar($codigo)
-    {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
-        $query = "UPDATE mesas 
-                    SET is_deleted = 1, fecha_modificacion = :fecha_modificacion 
-                    WHERE codigo = :codigo";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-
-        $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
-        $fechaModificacion = date('Y-m-d H:i:s');
-        $queryPreparada->bindParam(':fecha_modificacion', $fechaModificacion, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
-    }
-
     public static function ObtenerListadoMesasConEstados()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT id, codigo, estado, fecha_creacion FROM mesas WHERE is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->execute();
-        return $queryPreparada->fetchAll(PDO::FETCH_ASSOC);
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+
+        return $resultado->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function ObtenerMesaMasUsada()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT * FROM mesas 
-                    WHERE id = (
-                        SELECT m.id 
-                        FROM mesas m
-                        INNER JOIN pedidos p ON m.id = p.id_mesa
-                        GROUP BY m.id
-                        ORDER BY COUNT(p.id) DESC
-                        LIMIT 1)";
+                WHERE id = (
+                    SELECT m.id 
+                    FROM mesas m
+                    INNER JOIN pedidos p ON m.id = p.id_mesa
+                    GROUP BY m.id
+                    ORDER BY COUNT(p.id) DESC
+                    LIMIT 1)";
 
-        $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->execute();
-        return $queryPreparada->fetch(PDO::FETCH_ASSOC);
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesaMenosUsada()
+    {
+        $query = "SELECT * FROM mesas 
+                WHERE id = (
+                    SELECT m.id 
+                    FROM mesas m
+                    LEFT JOIN pedidos p ON m.id = p.id_mesa
+                    GROUP BY m.id
+                    ORDER BY COALESCE(COUNT(p.id), 0) ASC
+                    LIMIT 1)";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesaMayorFacturacion()
+    {
+        $query = "SELECT m.codigo AS mesa, SUM(p.importe_total) AS importe_total_facturado
+                FROM mesas m
+                INNER JOIN pedidos p ON m.id = p.id_mesa
+                GROUP BY m.codigo
+                ORDER BY SUM(p.importe_total) DESC
+                LIMIT 1";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesaMenorFacturacion()
+    {
+        $query = "SELECT m.codigo AS mesa, COALESCE(SUM(p.importe_total), 0) AS importe_total_facturado
+                FROM mesas m
+                LEFT JOIN pedidos p ON m.id = p.id_mesa
+                GROUP BY m.codigo
+                ORDER BY importe_total_facturado ASC
+                LIMIT 1";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesasOrdenadasPorImporte()
+    {
+        $query = "SELECT m.codigo AS mesa, p.importe_total AS importe
+                FROM mesas m
+                INNER JOIN pedidos p ON m.id = p.id_mesa
+                ORDER BY p.importe_total DESC";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesaMayorImporte()
+    {
+        $query = "SELECT m.codigo AS mesa, p.importe_total AS importe
+                FROM mesas m
+                INNER JOIN pedidos p ON m.id = p.id_mesa
+                ORDER BY p.importe_total DESC
+                LIMIT 1";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerMesaMenorImporte()
+    {
+        $query = "SELECT m.codigo AS mesa, COALESCE(p.importe_total, 0) AS importe
+                FROM mesas m
+                LEFT JOIN (
+                    SELECT id_mesa, SUM(importe_total) AS importe_total
+                    FROM pedidos
+                    GROUP BY id_mesa
+                ) p ON m.id = p.id_mesa
+                ORDER BY COALESCE(p.importe_total, 0) ASC
+                LIMIT 1";
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function ObtenerFacturacionEnPeriodo($codigoMesa, $fechaDesde, $fechaHasta)
+    {
+        $query = "SELECT SUM(p.importe_total) AS importe
+                FROM mesas m
+                INNER JOIN pedidos p ON m.id = p.id_mesa
+                WHERE (m.codigo = :codigo_mesa) AND (p.fecha_creacion BETWEEN :fecha_desde AND :fecha_hasta)
+                GROUP BY m.codigo";
+
+        $parametros = array(
+            ':codigo_mesa' => $codigoMesa,
+            ':fecha_desde' => $fechaDesde,
+            ':fecha_hasta' => $fechaHasta
+        );
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
+        
+        return $resultado->fetch(PDO::FETCH_ASSOC);
     }
 
     public static function MesaExiste($codigo)
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "SELECT codigo FROM mesas WHERE codigo = :codigo AND is_deleted = 0";
-        $queryPreparada = $acceso->PrepararConsulta($query);
-        $queryPreparada->bindParam(':codigo', $codigo, PDO::PARAM_STR);
-        $queryPreparada->execute();
 
-        $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
+        $parametros = array(':codigo' => $codigo);
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
 
-        if ($resultado != false)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        $mesa = $resultado->fetch(PDO::FETCH_ASSOC);
+
+        return ($mesa != false);
     }
 }

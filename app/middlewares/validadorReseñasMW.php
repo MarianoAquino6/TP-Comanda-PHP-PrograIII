@@ -3,7 +3,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 
-require_once './models/pedido.php';
+require_once './validadoresInputs/validadorInputReseñas.php';
 
 enum ModoValidacionReseñas
 {
@@ -13,10 +13,12 @@ enum ModoValidacionReseñas
 class ValidadorReseñasMW
 {
     public $modoValidacion;
+    private $_validador;
 
     public function __construct($modoValidacion)
     {
         $this->modoValidacion = $modoValidacion;
+        $this->_validador = new ValidadorInputReseñas();
     }
 
     public function __invoke(Request $request, RequestHandler $handler) 
@@ -28,7 +30,7 @@ class ValidadorReseñasMW
             switch ($this->modoValidacion)
             {
                 case ModoValidacionReseñas::Registro:
-                    $this->validarParametrosRegistrarReseña($parametros);
+                    $this->_validador->validarParametrosRegistrarReseña($parametros);
                     break;
             }
 
@@ -42,19 +44,5 @@ class ValidadorReseñasMW
         }
 
         return $response;
-    }
-
-    private function validarParametrosRegistrarReseña($parametros)
-    {
-        if (!isset($parametros['codigoPedido'], $parametros['puntuacionMesa'], $parametros['puntuacionMozo'], 
-            $parametros['puntuacionCocinero'], $parametros['puntuacionRestaurante'], $parametros['experiencia']))
-        {
-            throw new Exception('Complete los parametros necesarios');
-        }
-
-        if (!Pedido::PedidoExiste($parametros['codigoPedido']))
-        {
-            throw new Exception('El pedido ingresado no existe');
-        }
     }
 }

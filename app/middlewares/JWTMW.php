@@ -67,11 +67,6 @@ class JWTMW
             $payload = json_encode(['Token Error' => $e->getMessage()]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-
-            // $response = new Response();
-            // $payload = json_encode(array('mensaje' => 'ERROR: Hubo un error con el TOKEN'));
-            // $response->getBody()->write($payload);
-            // return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
 
         return $response;

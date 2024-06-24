@@ -14,18 +14,18 @@ class RegistroLogIn
         $this->_fechaIngreso = date('Y-m-d H:i:s');
     }
 
+    ///////////////////////////////////////////// CREATE ///////////////////////////////////////////////////////////
+
     public function Guardar()
     {
-        $acceso = AccesoDatos::ObtenerInstancia();
-
         $query = "INSERT INTO logins (username, sector, fecha_ingreso)
-                    VALUES (:username, :sector, :fecha_ingreso)";
-        $queryPreparada = $acceso->PrepararConsulta($query);
+                VALUES (:username, :sector, :fecha_ingreso)";
+        $parametros = [
+            ':username' => $this->_username,
+            ':sector' => $this->_sector,
+            ':fecha_ingreso' => $this->_fechaIngreso
+        ];
 
-        $queryPreparada->bindParam(':username', $this->_username, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':sector', $this->_sector, PDO::PARAM_STR);
-        $queryPreparada->bindParam(':fecha_ingreso', $this->_fechaIngreso, PDO::PARAM_STR);
-
-        return $queryPreparada->execute();
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
 }
