@@ -16,6 +16,7 @@ enum ModoValidacionPedidos
     case Foto;
     case CancelarTodo;
     case CancelarUno;
+    case ObtenerFoto;
 }
 
 class ValidadorPedidosMW
@@ -78,6 +79,7 @@ class ValidadorPedidosMW
                 $this->_validador->validarPedidoYProducto($parametros);
                 break;
             case ModoValidacionPedidos::Cobrar:
+            case ModoValidacionPedidos::ObtenerFoto:
             case ModoValidacionPedidos::CancelarTodo:
                 $this->_validador->validarPedido($parametros);
                 break;

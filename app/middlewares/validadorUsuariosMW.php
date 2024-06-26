@@ -14,6 +14,7 @@ enum ModoValidacionUsuarios
     case ModificacionSector;
     case Borrado;
     case LogsUsuario;
+    case BajaReactivacion;
 }
 
 class ValidadorUsuariosMW
@@ -63,6 +64,7 @@ class ValidadorUsuariosMW
                     $this->_validador->validarParametrosModificacionSector($parametros);
                     break;
                 case ModoValidacionUsuarios::Borrado:
+                case ModoValidacionUsuarios::BajaReactivacion;
                     $this->_validador->validarParametrosBorrado($parametros);
                     break;
                 case ModoValidacionUsuarios::LogsUsuario:

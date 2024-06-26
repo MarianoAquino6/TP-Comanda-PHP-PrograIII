@@ -35,8 +35,8 @@ class Usuario
     public function Registrar()
     {
         $query = "INSERT INTO 
-                usuarios (is_deleted, username, pass, sector, fecha_creacion, fecha_modificacion)
-                VALUES (0, :username, :pass, :sector, :fecha_creacion, :fecha_modificacion)";
+                usuarios (is_deleted, username, pass, sector, fecha_creacion, fecha_modificacion, activo)
+                VALUES (0, :username, :pass, :sector, :fecha_creacion, :fecha_modificacion, 1)";
         $passHasheada = password_hash($this->_pass, PASSWORD_DEFAULT);
 
         $parametros = [
@@ -92,6 +92,30 @@ class Usuario
         return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
 
+    public static function DarDeBaja($username)
+    {
+        $query = "UPDATE usuarios SET activo = 0, fecha_modificacion = :fecha_modificacion 
+                WHERE username = :username AND is_deleted = 0";
+        $parametros = [
+            ':username' => $username,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    public static function Reactivar($username)
+    {
+        $query = "UPDATE usuarios SET activo = 1, fecha_modificacion = :fecha_modificacion 
+                WHERE username = :username AND is_deleted = 0";
+        $parametros = [
+            ':username' => $username,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
+
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
     ///////////////////////////////////////////// DELETE ///////////////////////////////////////////////////////////
 
     public static function Borrar($username)
@@ -137,7 +161,7 @@ class Usuario
 
     public static function ObtenerTodos()
     {
-        $query = "SELECT username, sector, fecha_creacion, fecha_modificacion 
+        $query = "SELECT username, sector, fecha_creacion, fecha_modificacion, activo 
                 FROM usuarios
                 WHERE is_deleted = 0";
 
@@ -146,7 +170,7 @@ class Usuario
 
     public static function ObtenerUno($username)
     {
-        $query = "SELECT username, pass, sector, id FROM usuarios WHERE username = :username";
+        $query = "SELECT username, pass, sector, id FROM usuarios WHERE username = :username AND is_deleted = 0";
         $parametros = [':username' => $username];
 
         $fila = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC);
@@ -175,5 +199,13 @@ class Usuario
         $parametros = [':username' => $username];
 
         return AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function EstaInhabilitado($username)
+    {
+        $query = "SELECT username FROM usuarios WHERE username = :username AND activo = 0";
+        $parametros = [':username' => $username];
+
+        return AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC) != false;
     }
 }

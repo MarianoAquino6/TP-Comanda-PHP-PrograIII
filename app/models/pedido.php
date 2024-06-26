@@ -38,8 +38,8 @@ class Pedido
     public function RegistrarYDevolverId()
     {
         $query = "INSERT INTO 
-                pedidos (is_deleted, id_mesa, id_mozo, codigo, nombre_cliente, fecha_creacion, fecha_modificacion, foto_mesa)
-                VALUES (0, :id_mesa, :id_mozo, :codigo, :nombre_cliente, :fecha_creacion, :fecha_modificacion, :foto_mesa)";
+                pedidos (vigente, id_mesa, id_mozo, codigo, nombre_cliente, fecha_creacion, fecha_modificacion, foto_mesa)
+                VALUES (1, :id_mesa, :id_mozo, :codigo, :nombre_cliente, :fecha_creacion, :fecha_modificacion, :foto_mesa)";
 
         $parametros = [
             ':id_mesa' => $this->_idMesa,
@@ -78,12 +78,10 @@ class Pedido
 
     public function VincularFoto()
     {
-        $query = "UPDATE pedidos SET foto_mesa = :foto, fecha_modificacion = :fecha WHERE codigo = :codigo"; 
-
-        $fotoBinaria = file_get_contents($this->_fotoMesa);
+        $query = "UPDATE pedidos SET foto_mesa = :foto, fecha_modificacion = :fecha WHERE codigo = :codigo";
 
         $parametros = [
-            ':foto' => $fotoBinaria,
+            ':foto' => $this->_fotoMesa,
             ':fecha' => date('Y-m-d H:i:s'),
             ':codigo' => $this->_codigo
         ];
@@ -91,11 +89,25 @@ class Pedido
         return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
 
+    public function ObtenerFoto()
+    {
+        $query = "SELECT foto_mesa FROM pedidos WHERE codigo = :codigo";
+        $parametros = [':codigo' => $this->_codigo];
+
+        $stmt = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado['foto_mesa'];
+    }
+
     public function CancelarPedidoEntero()
     {
         $query = "UPDATE pedidos_productos pp
                 JOIN pedidos p ON pp.id_pedido = p.id
-                SET pp.estado = 'Cancelado', p.fecha_modificacion = :fecha_modificacion
+                SET pp.estado = 'Cancelado', 
+                    p.fecha_modificacion = :fecha_modificacion, 
+                    p.vigente = 0
                 WHERE p.id = :id_pedido";
 
         $parametros = [
@@ -106,12 +118,52 @@ class Pedido
         return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
     }
 
+    public function DefinirTiempoTotalEstimado()
+    {
+        // Agarro el tiempo maximo entre todos aquellos registros de pedidos_productos que esten vinculados 
+        // al pedido mediante el codigo y no hayan sido cancelados
+        $query = "UPDATE pedidos 
+              SET tiempo_total_estimado = (
+                      SELECT MAX(pp.tiempo_estimado)
+                      FROM pedidos_productos pp
+                      INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                      WHERE pe.codigo = :codigoPedido1 AND pp.estado != 'Cancelado'
+                  ),
+                  fecha_modificacion = :fecha_modificacion
+              WHERE codigo = :codigoPedido2";
+
+        $parametros = [
+            ':codigoPedido1' => $this->_codigo,
+            ':codigoPedido2' => $this->_codigo,
+            ':fecha_modificacion' => date('Y-m-d H:i:s')
+        ];
+
+        // Ejecutar consulta y retornar resultado
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
+    public function DefinirFechaFinalizacion()
+    {
+        $query = "UPDATE pedidos 
+              SET fecha_finalizacion = :fecha_finalizacion,
+                  fecha_modificacion = :fecha_finalizacion
+              WHERE codigo = :codigoPedido";
+
+        $parametros = [
+            ':codigoPedido' => $this->_codigo,
+            ':fecha_finalizacion' => date('Y-m-d H:i:s')
+        ];
+
+        // Ejecutar consulta y retornar resultado
+        return AccesoDatos::EjecutarConsultaIUD($query, $parametros);
+    }
+
     ///////////////////////////////////////////// DELETE ///////////////////////////////////////////////////////////
 
-    public static function Borrar($idMesa)
+    public static function Desestimar($idMesa)
     {
-        $query = "UPDATE pedidos SET is_deleted = 1, fecha_modificacion = :fecha_modificacion 
-                WHERE id_mesa = :id_mesa AND is_deleted = 0";
+        $query = "UPDATE pedidos SET vigente = 0, fecha_modificacion = :fecha_modificacion 
+                WHERE id_mesa = :id_mesa";
 
         $parametros = [
             ':id_mesa' => $idMesa,
@@ -126,7 +178,7 @@ class Pedido
     public static function ObtenerUno($codigoPedido)
     {
         $query = "SELECT id_mesa, id_mozo, codigo, nombre_cliente, foto_mesa, id FROM pedidos 
-                    WHERE codigo = :codigo AND is_deleted = 0";
+                    WHERE codigo = :codigo";
         $parametros = [':codigo' => $codigoPedido];
 
         $queryPreparada = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
@@ -180,15 +232,12 @@ class Pedido
         $queryPreparada = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
-        if ($resultado !== false) 
-        {
+        if ($resultado !== false) {
             $tiempoRestanteSegundos = $resultado['tiempo_restante'];
             $tiempoRestanteMinutos = $tiempoRestanteSegundos / 60;
             return $tiempoRestanteMinutos;
-        } 
-        else 
-        {
-            return false; 
+        } else {
+            return false;
         }
     }
 
@@ -206,5 +255,24 @@ class Pedido
         $resultado = $queryPreparada->fetch(PDO::FETCH_ASSOC);
 
         return ($resultado != false) ? ($resultado['total'] == $resultado['pendientes']) : false;
+    }
+
+    public static function ObtenerPedidosDemorados()
+    {
+        $query = "SELECT 
+                (TIME_TO_SEC(TIMEDIFF(p.fecha_finalizacion, p.fecha_creacion)) / 60) AS minutos_demorados,
+                p.codigo,
+                p.nombre_cliente,
+                m.codigo AS codigo_mesa,
+                u.username AS mozo
+            FROM pedidos p
+            INNER JOIN mesas m ON p.id_mesa = m.id
+            INNER JOIN usuarios u ON p.id_mozo = u.id
+            WHERE p.fecha_finalizacion IS NOT NULL 
+            AND (TIME_TO_SEC(TIMEDIFF(p.fecha_finalizacion, p.fecha_creacion)) / 60) > p.tiempo_total_estimado";
+
+        $parametros = [];
+
+        return AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetchAll(PDO::FETCH_ASSOC);
     }
 }

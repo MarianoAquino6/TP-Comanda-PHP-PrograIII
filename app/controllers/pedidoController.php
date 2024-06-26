@@ -152,11 +152,30 @@ class PedidoController
         return $this->CrearRespuesta($response, array("mensaje" => "Su pedido esta siendo preparado! El tiempo restante es de " . $tiempoRestante. " minutos"));
     }
 
-    public function ObtenerDemoras($request, $response, $args)
+    public function ObtenerDemorasProductos($request, $response, $args)
     {
         try 
         {
-            $pedidosDemorados = PedidoProducto::ObtenerPedidosDemorados();
+            $productosDemorados = PedidoProducto::ObtenerPedidosDemorados();
+
+            if (!$productosDemorados)
+            {
+                throw new Exception("No existen productos con demoras");
+            }
+
+            return $this->CrearRespuesta($response, array("listaProductosDemora" => $productosDemorados));
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerDemorasPedidos($request, $response, $args)
+    {
+        try 
+        {
+            $pedidosDemorados = Pedido::ObtenerPedidosDemorados();
 
             if (!$pedidosDemorados)
             {
@@ -287,24 +306,34 @@ class PedidoController
         }
     }
 
-    // public function ObtenerFotosPedidos($request, $response, $args)
-    // {
-    //     try 
-    //     {
-    //         $fotosPedidos = Pedido::ObtenerFotosClientes();
+    public function ObtenerFoto($request, $response, $args)
+    {
+        try 
+        {
+            $parametros = $request->getQueryParams();
+            $codigoPedido = $parametros['codigoPedido'];
+            $pedido = Pedido::ObtenerUno($codigoPedido);
+            $rutaFoto = $pedido->ObtenerFoto();
 
-    //         if (!$fotosPedidos)
-    //         {
-    //             throw new Exception("No hay fotos vinculadas");
-    //         }
+            if (!file_exists($rutaFoto)) 
+            {
+                throw new Exception("La foto no se encuentra en el servidor");
+            }
 
-    //         return $this->CrearRespuesta($response, array("fotosClientes" => $fotosPedidos));
-    //     } 
-    //     catch (Exception $e) 
-    //     {
-    //         return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
-    //     }
-    // }
+            $imagen = file_get_contents($rutaFoto);
+            $tipoImagen = mime_content_type($rutaFoto);
+
+            $response = $response->withHeader('Content-Type', $tipoImagen)
+                             ->withHeader('Content-Disposition', 'inline; filename="' . basename($rutaFoto) . '"');
+
+            $response->getBody()->write($imagen);
+            return $response;
+        } 
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
 
     //////////////////////////////////////////// POST /////////////////////////////////////////////////
 
@@ -351,15 +380,39 @@ class PedidoController
         }
     }
 
+    private function MoverFoto($archivo, $codigoPedido)
+    {
+        $directorioDestino = './img/';
+
+        if (!is_dir($directorioDestino)) 
+        {
+            mkdir($directorioDestino, 0755, true); // Crear el directorio si no existe
+        }
+
+        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION); // Obtener la extensión del archivo
+        $nombreArchivo = $codigoPedido . '.' . $extension; // Asignar el código del pedido como nombre del archivo
+        $destino = $directorioDestino . $nombreArchivo;
+        $imagen = $archivo['tmp_name'];
+
+        $resultadoMoverFoto = move_uploaded_file($imagen, $destino);
+
+        if (!$resultadoMoverFoto)
+        {
+            throw new Exception("Ha surgido un error al mover la foto");
+        }
+
+        return $destino; // Devuelvo la ruta completa donde se guardo el archivo
+    }
+
     public function VincularFoto($request, $response, $args)
     {
         try
         {
             $parametros = $request->getParsedBody();
-
             $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
-            $pedido->SetFoto($_FILES['foto']['tmp_name']);
-            // $pedido->SetFoto($_FILES['foto']);
+            $rutaFoto = $this->MoverFoto($_FILES['foto'], $parametros['codigoPedido']);
+
+            $pedido->SetFoto($rutaFoto);
             $resultado = $pedido->VincularFoto();
 
             if ($resultado)
@@ -397,6 +450,12 @@ class PedidoController
 
             if ($resultado)
             {
+                //Si todos los pedidos fueron tomados y no hay mas pedidos en pendiente
+                if (PedidoProducto::TodosLosPedidosEstanTomados($parametros['codigoPedido']))
+                {
+                    $pedido->DefinirTiempoTotalEstimado();
+                }
+
                 return $this->CrearRespuesta($response, array("mensaje" => "Pedido tomado con exito"));
             } 
             else 
@@ -428,6 +487,12 @@ class PedidoController
 
             if ($resultado) 
             {
+                //Si todos los pedidos estan listos para servir (Pudiendo algunos estar cancelados)
+                if (PedidoProducto::TodosLosPedidosEstanListos($parametros['codigoPedido']))
+                {
+                    $pedido->DefinirFechaFinalizacion();
+                }
+
                 return $this->CrearRespuesta($response, array("mensaje" => "Pedido terminado con exito"));
             } 
             else 

@@ -109,8 +109,10 @@ class PedidoProducto
 
     public static function ObtenerPedidoProductoDisponible($idPedido, $idProducto)
     {
-        $query = "SELECT id_pedido, id_producto, estado, id FROM pedidos_productos 
-                WHERE id_producto = :id_producto AND id_pedido = :id_pedido AND estado = :estado 
+        $query = "SELECT pp.id_pedido, pp.id_producto, pp.estado, pp.id FROM pedidos_productos pp
+                INNER JOIN pedidos p ON pp.id_pedido = p.id
+                WHERE pp.id_producto = :id_producto AND pp.id_pedido = :id_pedido AND pp.estado = :estado 
+                AND p.vigente = 1
                 LIMIT 1";
         
         $parametros = [
@@ -125,10 +127,12 @@ class PedidoProducto
 
     public static function ObtenerPedidoProductoEnPreparacion($idPedido, $idProducto, $idEmpleado)
     {
-        $query = "SELECT id_pedido, id_producto, estado, id FROM pedidos_productos 
-                WHERE id_producto = :id_producto AND id_pedido = :id_pedido AND id_usuario = :id_empleado 
-                AND estado = :estado 
+        $query = "SELECT pp.id_pedido, pp.id_producto, pp.estado, pp.id FROM pedidos_productos pp
+                INNER JOIN pedidos p ON pp.id_pedido = p.id 
+                WHERE pp.id_producto = :id_producto AND pp.id_pedido = :id_pedido AND pp.id_usuario = :id_empleado 
+                AND pp.estado = :estado AND p.vigente = 1
                 LIMIT 1";
+        
         $parametros = [
             ':estado' => self::ESTADO_EN_PREPARACION,
             ':id_producto' => $idProducto,
@@ -154,7 +158,8 @@ class PedidoProducto
             INNER JOIN pedidos pe ON pp.id_pedido = pe.id
             INNER JOIN mesas me ON pe.id_mesa = me.id
             INNER JOIN usuarios us ON pe.id_mozo = us.id
-            WHERE pr.tipo = :tipo AND pp.estado = :estado";
+            WHERE pr.tipo = :tipo AND pp.estado = :estado AND pe.vigente = 1";
+        
         $parametros = [
             ':estado' => self::ESTADO_PENDIENTE,
             ':tipo' => $tipoProducto
@@ -169,7 +174,7 @@ class PedidoProducto
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pe.is_deleted = 0";
+                WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pe.vigente = 1";
     
         $parametros = [
             ':id_mozo' => $idMozo
@@ -184,7 +189,7 @@ class PedidoProducto
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE pp.id_usuario = :id_empleado AND pp.estado = :estado AND pe.is_deleted = 0";
+                WHERE pp.id_usuario = :id_empleado AND pp.estado = :estado AND pe.vigente = 1";
     
         $parametros = [
             ':id_empleado' => $idEmpleado,
@@ -200,7 +205,7 @@ class PedidoProducto
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pp.estado = :estado";
+                WHERE pe.id_mozo = :id_mozo AND me.estado != 'Cerrada' AND pp.estado = :estado AND pe.vigente = 1";
     
         $parametros = [
             ':id_mozo' => $idMozo,
@@ -217,7 +222,7 @@ class PedidoProducto
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE me.estado != 'Cerrada' AND pe.is_deleted = 0";
+                WHERE me.estado != 'Cerrada' AND pe.vigente = 1";
     
         $parametros = [];
 
@@ -389,5 +394,58 @@ class PedidoProducto
         ];
 
         return AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function TodosLosPedidosEstanTomados($codigoPedido)
+    {
+        $query = "SELECT * FROM pedidos_productos pp 
+                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                WHERE pe.codigo = :codigo_pedido AND pp.estado = :pendiente";
+
+        $parametros = [
+            ':codigo_pedido' => $codigoPedido,
+            ':pendiente' => self::ESTADO_PENDIENTE
+        ];
+
+        $resultados = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetchAll(PDO::FETCH_ASSOC);
+
+        // Si hay resultados, significa que al menos un producto esta pendiente
+        if (!empty($resultados)) 
+        {
+            return false; // Hay productos pendientes
+        } 
+        else 
+        {
+            return true; // Todos los productos están tomados
+        }
+    }
+
+    public static function TodosLosPedidosEstanListos($codigoPedido)
+    {
+        // Consulta para contar los productos que no esten en listos o cancelados
+        $query = "SELECT COUNT(*) AS cantidad
+                FROM pedidos_productos pp
+                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                WHERE pe.codigo = :codigo_pedido
+                AND pp.estado != :listo
+                AND pp.estado != :cancelado";
+
+        $parametros = [
+            ':codigo_pedido' => $codigoPedido,
+            ':listo' => self::ESTADO_LISTO,
+            ':cancelado' => self::ESTADO_CANCELADO
+        ];
+
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC);
+
+        // Si cantidad es 0, todos los productos están terminados; de lo contrario, no están todos terminados
+        if ($resultado['cantidad'] == 0) 
+        {
+            return true; // Todos los productos están listos
+        } 
+        else 
+        {
+            return false; // No todos los productos están listos
+        }
     }
 }

@@ -95,6 +95,46 @@ class Producto
         return AccesoDatos::EjecutarConsultaSelect($query, [])->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    private static function TransformarArrayACSV($arrayAsociativo)
+    {
+        if (empty($arrayAsociativo)) {
+            return '';
+        }
+
+        $csv = '';
+
+        // Obtener los encabezados del array asociativo
+        $headers = array_keys($arrayAsociativo[0]);
+        $csv .= implode(',', $headers) . "\n";
+
+        // Agregar los valores del array asociativo al CSV
+        foreach ($arrayAsociativo as $fila) {
+            $csv .= implode(',', array_map(function ($valor) {
+                // Envolver solo los valores que contienen comas o comillas
+                if (strpos($valor, ',') !== false || strpos($valor, '"') !== false) {
+                    return '"' . str_replace('"', '""', $valor) . '"'; // Escapar comillas dobles
+                } else {
+                    return $valor;
+                }
+            }, $fila)) . "\n";
+        }
+
+        // Eliminar el último salto de línea si existe
+        $csv = rtrim($csv, "\n");
+
+        return $csv;
+    }
+
+    public static function ObtenerTodosCSV()
+    {
+        $query = "SELECT is_deleted, tipo, codigo, nombre, precio
+                FROM productos WHERE is_deleted = 0";
+
+        $arrayAsociativoProductos = AccesoDatos::EjecutarConsultaSelect($query, [])->fetchAll(PDO::FETCH_ASSOC);
+
+        return self::TransformarArrayACSV($arrayAsociativoProductos);
+    }
+
     public static function ObtenerUno($codigoProducto)
     {
         $query = "SELECT tipo, codigo, nombre, precio, id FROM productos 

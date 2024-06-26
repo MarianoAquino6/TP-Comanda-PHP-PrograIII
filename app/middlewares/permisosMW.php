@@ -4,6 +4,7 @@ use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 
 require_once './JWT/JWTHandler.php';
+require_once './models/usuario.php';
 
 class PermisosMW
 {
@@ -21,10 +22,16 @@ class PermisosMW
             $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
             $data = JWTHandler::ObtenerData($tokenRecibido);
             $sectorUsuario = $data->sector;
+            $username = $data->username;
 
             if (!in_array($sectorUsuario, $this->sectoresUsuario))
             {
                 throw new Exception('El usuario no tiene los permisos necesarios.');
+            }
+
+            if (Usuario::EstaInhabilitado($username))
+            {
+                throw new Exception('Su usuario ha sido dado de baja');
             }
 
             $response = $handler->handle($request);

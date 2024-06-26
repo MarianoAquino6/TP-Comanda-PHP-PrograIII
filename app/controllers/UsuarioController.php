@@ -1,6 +1,7 @@
 <?php 
 
 require_once './models/usuario.php';
+require_once './pdf/PDFHandler.php';
 
 class UsuarioController
 {
@@ -44,6 +45,32 @@ class UsuarioController
         catch (Exception $e) 
         {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
+    public function ObtenerPDFUsuarios($request, $response, $args)
+    {
+        try
+        {
+            $lista = Usuario::ObtenerTodos();
+            $pdfHandler  = new PDFHandler($lista, "tabla_usuarios.pdf", "USUARIOS", "./img/utn.png");
+
+            $pdfHandler->createPDF();
+
+            // Configurar encabezados para mostrar el PDF en el navegador
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="usuarios.pdf"'); // 'inline' para mostrar en el navegador
+
+            // Leer el contenido del PDF generado
+            readfile('tabla_usuarios.pdf'); // Asegúrate de que aquí coincida con el nombre de tu archivo PDF generado
+
+            exit; // Terminar la ejecución después de enviar el archivo PDF
+
+            // return $this->CrearRespuesta($response, ["listaUsuarios" => $lista]);
+        }
+        catch (Exception $e)
+        {
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
         }
     }
 
@@ -162,6 +189,52 @@ class UsuarioController
             else 
             {
                 throw new Exception("Error en la modificación");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
+        }
+    }
+
+    public function DarDeBaja($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+    
+            $resultado = Usuario::DarDeBaja($parametros['username']);
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario dado de baja con exito"]);
+            } 
+            else 
+            {
+                throw new Exception("Error en la baja del usuario");
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->CrearRespuesta($response, ["mensaje" => $e->getMessage()], 500);
+        }
+    }
+
+    public function Reactivar($request, $response, $args)
+    {
+        try
+        {
+            $parametros = $request->getParsedBody();
+    
+            $resultado = Usuario::Reactivar($parametros['username']);
+
+            if ($resultado) 
+            {
+                return $this->CrearRespuesta($response, ["mensaje" => "Usuario reactivado con exito"]);
+            } 
+            else 
+            {
+                throw new Exception("Error al reactivar el usuario");
             }
         }
         catch (Exception $e) 

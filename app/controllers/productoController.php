@@ -26,6 +26,22 @@ class ProductoController
         }
     }
 
+    public function ObtenerTodosLosProductosCSV($request, $response, $args)
+    {
+        try {
+            $csv = Producto::ObtenerTodosCSV();
+    
+            $response = $response->withHeader('Content-Type', 'text/csv')
+                                 ->withHeader('Content-Disposition', 'attachment; filename="productos.csv"');
+    
+            $response->getBody()->write($csv);
+    
+            return $response;
+        } catch (Exception $e) {
+            return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+        }
+    }
+
     //////////////////////////////////////////// POST /////////////////////////////////////////////////
 
     public function RegistrarProducto($request, $response, $args)

@@ -252,7 +252,7 @@ class MesaController
             $mesaAActualizar = Mesa::ObtenerUno($parametros['codigo']);
             $resultado = $mesaAActualizar->ActualizarEstado("Cerrada");
 
-            Pedido::Borrar($mesaAActualizar->GetId());
+            Pedido::Desestimar($mesaAActualizar->GetId());
 
             if ($resultado) 
             {

@@ -19,16 +19,22 @@ class ValidadorInputUsuarios extends ValidadorInputBase
     public function validarParametrosLogin($parametros)
     {
         parent::validarCamposObligatorios($parametros, ['username', 'pass']);
+        if (Usuario::EstaInhabilitado($parametros['username']))
+        {
+            throw new Exception('Su usuario ha sido dado de baja');
+        }
     }
 
     public function validarParametrosModificacionUsername($parametros)
     {
         parent::validarCamposObligatorios($parametros, ['usernameNuevo', 'usernameOriginal']);
 
-        if (!Usuario::UsuarioExiste($parametros['usernameOriginal']))
-        {
-            throw new Exception('El usernameOriginal no existe');
-        }
+        // if (!Usuario::UsuarioExiste($parametros['usernameOriginal']))
+        // {
+        //     throw new Exception('El usernameOriginal no existe');
+        // }
+
+        parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['usernameOriginal'], 'El usernameOriginal indicado no existe');
 
         if (Usuario::UsuarioExiste($parametros['usernameNuevo']))
         {
@@ -45,10 +51,12 @@ class ValidadorInputUsuarios extends ValidadorInputBase
             throw new Exception('La contraseña no es valida');
         }
 
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El username ingresado no existe');
-        }
+        parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
+
+        // if (!Usuario::UsuarioExiste($parametros['username']))
+        // {
+        //     throw new Exception('El username ingresado no existe');
+        // }
     }
 
     public function validarParametrosModificacionSector($parametros)
@@ -60,30 +68,34 @@ class ValidadorInputUsuarios extends ValidadorInputBase
             throw new Exception('La contraseña no es valida o el sector no es válido');
         }
 
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El username ingresado no existe');
-        }
+        parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
+
+        // if (!Usuario::UsuarioExiste($parametros['username']))
+        // {
+        //     throw new Exception('El username ingresado no existe');
+        // }
     }
 
     public function validarParametrosBorrado($parametros)
     {
         parent::validarCamposObligatorios($parametros, ['username']);
+        parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
 
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El usuario a borrar no existe');
-        }
+        // if (!Usuario::UsuarioExiste($parametros['username']))
+        // {
+        //     throw new Exception('El usuario a borrar no existe');
+        // }
     }
 
     public function validarParametrosLogsUsuario($parametros)
     {
         parent::validarCamposObligatorios($parametros, ['username']);
+        parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
 
-        if (!Usuario::UsuarioExiste($parametros['username']))
-        {
-            throw new Exception('El usuario ingresado no existe');
-        }
+        // if (!Usuario::UsuarioExiste($parametros['username']))
+        // {
+        //     throw new Exception('El usuario ingresado no existe');
+        // }
     }
 
     private function validarFormatoDatos($parametros)
