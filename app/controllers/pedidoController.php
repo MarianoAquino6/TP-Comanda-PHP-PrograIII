@@ -44,6 +44,11 @@ class PedidoController
                     throw new Exception("Sector no reconocido");
             }
 
+            if ($pedidosDisponibles == false)
+            {
+                throw new Exception("No hay pedidos pendientes");
+            }
+
             return $this->CrearRespuesta($response, array("listaPedidosDisponibles" => $pedidosDisponibles));
         } 
         catch (Exception $e) 
@@ -62,6 +67,11 @@ class PedidoController
 
             $usuario = Usuario::ObtenerUno($username);
             $pedidosTomados = PedidoProducto::ObtenerPedidosTomadosMozo($usuario->GetId());
+
+            if ($pedidosTomados == false)
+            {
+                return $this->CrearRespuesta($response, array("listaPedidosTomados" => "Aun no ha tomado pedidos. Revisar estado de la mesa"));
+            }
 
             return $this->CrearRespuesta($response, array("listaPedidosTomados" => $pedidosTomados));
         } 
@@ -114,6 +124,11 @@ class PedidoController
         try 
         {
             $pedidosConEstados = PedidoProducto::ObtenerPedidosConEstados();
+
+            if ($pedidosConEstados == false)
+            {
+                return $this->CrearRespuesta($response, array("listaPedidosEstados" => "No hay pedidos vigentes"));
+            }
 
             return $this->CrearRespuesta($response, array("listaPedidosEstados" => $pedidosConEstados));
         } 
@@ -348,7 +363,7 @@ class PedidoController
 
             $mesa = Mesa::ObtenerUno($parametros['codigoMesa']);
             $mozo = Usuario::ObtenerUno($username);
-            $codigoPedido = substr(bin2hex(random_bytes(6)), 0, 6);
+            $codigoPedido = substr(bin2hex(random_bytes(3)), 0, 5);
 
             $nuevoPedido = new Pedido($mesa->GetId(), $mozo->GetId(), $codigoPedido, $parametros['nombreCliente']);
             $idPedido = $nuevoPedido->RegistrarYDevolverId();
@@ -439,11 +454,18 @@ class PedidoController
             $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
             $data = JWTHandler::ObtenerData($tokenRecibido);
             $username = $data->username;
+            $sector = $data->sector;
             $parametros = $request->getParsedBody();
 
             $empleado = Usuario::ObtenerUno($username);
             $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
             $producto = Producto::ObtenerUno($parametros['codigoProducto']);
+
+            if ($producto->ProductoNoCorrespondeAUsuario($sector))
+            {
+                throw new Exception("El producto no corresponde a tu sector");
+            }
+
             $pedidoProductoDisponible = PedidoProducto::ObtenerPedidoProductoDisponible($pedido->GetId(), $producto->GetId());
 
             $resultado = $pedidoProductoDisponible->TomarPedido($empleado->GetId(), $parametros['tiempoEstimado']);
@@ -476,11 +498,18 @@ class PedidoController
             $tokenRecibido = JWTHandler::ObtenerTokenEnviado($request);
             $data = JWTHandler::ObtenerData($tokenRecibido);
             $username = $data->username;
+            $sector = $data->sector;
             $parametros = $request->getParsedBody();
 
             $empleado = Usuario::ObtenerUno($username);
             $pedido = Pedido::ObtenerUno($parametros['codigoPedido']);
             $producto = Producto::ObtenerUno($parametros['codigoProducto']);
+
+            if (PedidoProducto::PedidoTomadoNoCorrespondeAlUsuario($empleado->GetId(), $producto->GetId()))
+            {
+                throw new Exception("El producto no corresponde a tu sector");
+            }
+
             $pedidoProductoEnPreparacion = PedidoProducto::ObtenerPedidoProductoEnPreparacion($pedido->GetId(), $producto->GetId(), $empleado->GetId());
 
             $resultado = $pedidoProductoEnPreparacion->TerminarPedido();

@@ -138,7 +138,7 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
-    $group->get('/ordenar-segun-importe', \MesaController::class . ':ObtenerMesasOrdenadasPorImporte')
+    $group->get('/ordenar-segun-importe-menor-mayor', \MesaController::class . ':ObtenerMesasOrdenadasPorImporteMenorMayor')
     ->add(new AuditoriaMW())
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
@@ -194,7 +194,7 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
     $group->put('/actualizar-estado', \MesaController::class . ':ActualizarEstadoMesa')
     ->add(new AuditoriaMW())
     ->add(new ValidadorMesasMW(ModoValidacionMesas::ActualizarEstado))
-    ->add(new PermisosMW(["MOZO"]))
+    ->add(new PermisosMW(["MOZO", "ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
     $group->put('/cerrar', \MesaController::class . ':CerrarMesa')
@@ -330,7 +330,7 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
     $group->get('/foto', \PedidoController::class . ':ObtenerFoto')
     ->add(new AuditoriaMW())
     ->add(new ValidadorPedidosMW(ModoValidacionPedidos::ObtenerFoto))
-    ->add(new PermisosMW(["ADMIN"]))
+    ->add(new PermisosMW(["ADMIN", "MOZO"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));
 
     //////////////////////////////////////////// POST /////////////////////////////////////////////////
@@ -384,7 +384,7 @@ $app->group('/reseñas', function (RouteCollectorProxy $group)
 {
     //////////////////////////////////////////// GET /////////////////////////////////////////////////
 
-    $group->get('/top', \ReseñaController::class . ':ObtenerMejoresComentariosMesas')
+    $group->get('/top', \ReseñaController::class . ':ObtenerMejoresComentariosPromedio')
     ->add(new AuditoriaMW())
     ->add(new PermisosMW(["ADMIN"]))
     ->add(new JWTMW(ModoJWT::VerificarToken));

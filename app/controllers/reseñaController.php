@@ -26,7 +26,7 @@ class ReseñaController
             $idCocineros = $idNecesarios['cocineros'];
 
             $nuevaReseña = new Reseña($idMesa, $parametros['puntuacionMesa'], $idMozo, $parametros['puntuacionMozo'], 
-            $idCocineros, $parametros['puntuacionCocinero'], $parametros['puntuacionRestaurante'], $parametros['experiencia']);
+            $idCocineros, $parametros['puntuacionCocinero'], $parametros['puntuacionRestaurante'], $parametros['experiencia'], $parametros['codigoPedido']);
             
             $resultado = $nuevaReseña->Registrar();
     
@@ -45,7 +45,7 @@ class ReseñaController
         }
     }
 
-    public function ObtenerMejoresComentariosMesas($request, $response, $args)
+    public function ObtenerMejoresComentariosPromedio($request, $response, $args)
     {
         try
         {

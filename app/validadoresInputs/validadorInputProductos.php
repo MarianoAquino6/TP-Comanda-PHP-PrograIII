@@ -92,19 +92,19 @@ class ValidadorInputProductos extends ValidadorInputBase
             if (!in_array($row[0], ['0', '1'], true))
             {
                 fclose($archivo);
-                throw new Exception('El campo "is_deleted" debe ser 1 o 0');
+                throw new Exception('El campo is_deleted debe ser 1 o 0');
             }
             // Valido que el tipo sea uno admitido
             if (!in_array($row[1], ['COMIDA', 'TRAGO', 'CERVEZA'], true))
             {
                 fclose($archivo);
-                throw new Exception('El campo "tipo" debe ser "COMIDA", "TRAGO" o "CERVEZA"');
+                throw new Exception('El campo tipo debe ser "COMIDA", "TRAGO" o "CERVEZA"');
             }
             // Valido que el precio sea un numero
             if (!is_numeric($row[4]))
             {
                 fclose($archivo);
-                throw new Exception('El campo "precio" debe ser numerico');
+                throw new Exception('El campo precio debe ser numerico');
             }
         }
         fclose($archivo);

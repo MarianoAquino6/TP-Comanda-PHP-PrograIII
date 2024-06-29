@@ -18,6 +18,12 @@ class ProductoController
         try 
         {
             $lista = Producto::ObtenerTodos();
+
+            if ($lista == false)
+            {
+                return $this->CrearRespuesta($response, array("listaProductos" => "No existen productos"));
+            }
+
             return $this->CrearRespuesta($response, array("listaProductos" => $lista));
         } 
         catch (Exception $e) 
@@ -30,12 +36,13 @@ class ProductoController
     {
         try {
             $csv = Producto::ObtenerTodosCSV();
-    
+
+
             $response = $response->withHeader('Content-Type', 'text/csv')
                                  ->withHeader('Content-Disposition', 'attachment; filename="productos.csv"');
-    
+
             $response->getBody()->write($csv);
-    
+
             return $response;
         } catch (Exception $e) {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
@@ -68,13 +75,65 @@ class ProductoController
         }
     }
 
+    // public function ImportarProductos($request, $response, $args)
+    // {
+    //     try
+    //     {
+    //         //$encabezadoEsperado = ['is_deleted', 'tipo', 'codigo', 'nombre', 'precio'];
+    //         $archivo = fopen($_FILES['csv']['tmp_name'], 'r');
+
+    //         // Leer y descartar la primera línea (encabezado)
+    //         fgetcsv($archivo, 1000, ",");
+
+    //         while (($row = fgetcsv($archivo, 1000, ",")) != FALSE) 
+    //         {
+    //             // Si no existe en la base lo creo y registro
+    //             if (!Producto::ProductoExiste($row[2]))
+    //             {
+    //                 $nuevoProducto = new Producto($row[1], $row[2], $row[3], $row[4]);
+    //                 $resultado = $nuevoProducto->Registrar();
+    //             }
+
+    //             // En caso de que ya existe lo actualizo
+    //             if (Producto::ProductoExiste($row[2]))
+    //             {
+    //                 $productoAActualizar = Producto::ObtenerUno($row[2]);
+
+    //                 // Si corresponde borrarlo
+    //                 if ($row[0] == "1")
+    //                 {
+    //                     $productoAActualizar->Borrar();
+    //                 }
+    //                 // Si corresponde actualizar el precio
+    //                 if ((double)$row[4] != $productoAActualizar->GetPrecio())
+    //                 {
+    //                     $productoAActualizar->ActualizarPrecio($row[4]);
+    //                 }
+    //             }
+    //         }
+    //         fclose($archivo);
+
+    //         if ($resultado) 
+    //         {
+    //             return $this->CrearRespuesta($response, array("mensaje" => "Importacion exitosa"));
+    //         }
+    //     }
+    //     catch (Exception $e) 
+    //     {
+    //         return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
+    //     }
+    // }
+
     public function ImportarProductos($request, $response, $args)
     {
         try
         {
             //$encabezadoEsperado = ['is_deleted', 'tipo', 'codigo', 'nombre', 'precio'];
             $archivo = fopen($_FILES['csv']['tmp_name'], 'r');
-
+            
+            // Leer y descartar la primera línea (encabezado)
+            fgetcsv($archivo, 1000, ",");
+            
             while (($row = fgetcsv($archivo, 1000, ",")) != FALSE) 
             {
                 // Si no existe en la base lo creo y registro
@@ -103,6 +162,11 @@ class ProductoController
             }
             fclose($archivo);
 
+            // Si $resultado no está definido, significa que no hubo ninguna acción, entonces definirlo como true
+            if (!isset($resultado)) {
+                $resultado = true;
+            }
+
             if ($resultado) 
             {
                 return $this->CrearRespuesta($response, array("mensaje" => "Importacion exitosa"));
@@ -112,6 +176,9 @@ class ProductoController
         {
             return $this->CrearRespuesta($response, array("mensaje" => $e->getMessage()), 500);
         }
+
+        // Devolver una respuesta por defecto si $resultado no está definido
+        return $this->CrearRespuesta($response, array("mensaje" => "No se realizaron cambios"));
     }
 
     //////////////////////////////////////////// PUT /////////////////////////////////////////////////

@@ -48,7 +48,7 @@ class ValidadorInputUsuarios extends ValidadorInputBase
 
         if (!$this->PassEsValida($parametros['pass']))
         {
-            throw new Exception('La contraseña no es valida');
+            throw new Exception('La contraseña no es valida. La pass debe tener entre 4 y 10 caracteres, al menos una minuscula, una mayuscula y un numero.');
         }
 
         parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
@@ -65,7 +65,7 @@ class ValidadorInputUsuarios extends ValidadorInputBase
 
         if (!in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
         {
-            throw new Exception('La contraseña no es valida o el sector no es válido');
+            throw new Exception('El sector no es válido. Usar ADMIN, MOZO, CERVECERO, BARTENDER o COCINERO');
         }
 
         parent::validarExistenciaEntidad('Usuario', 'UsuarioExiste', $parametros['username'], 'El username indicado no existe');
@@ -102,7 +102,7 @@ class ValidadorInputUsuarios extends ValidadorInputBase
     {
         if (!$this->PassEsValida($parametros['pass']) || !in_array($parametros['sector'], ['ADMIN', 'MOZO', 'CERVECERO', 'BARTENDER', 'COCINERO']))
         {
-            throw new Exception('Formato de datos no valido');
+            throw new Exception('Formato de datos no valido. La pass debe tener entre 4 y 10 caracteres, al menos una minuscula, una mayuscula y un numero. Los sectores disponibles son: ADMIN, MOZO, CERVECERO, BARTENDER o COCINERO');
         }
     }
 

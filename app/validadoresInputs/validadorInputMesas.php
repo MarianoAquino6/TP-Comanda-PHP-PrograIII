@@ -11,7 +11,7 @@ class ValidadorInputMesas extends ValidadorInputBase
         
         if (!in_array($parametros['estado'], ['Con cliente esperando pedido', 'Con cliente comiendo', 'Con cliente pagando']))
         {
-            throw new Exception('Estado no válido. Los estados permitidos son: "Con cliente esperando pedido", "Con cliente comiendo", "Con cliente pagando"');
+            throw new Exception('Estado no valido. Los estados permitidos son: Con cliente esperando pedido, Con cliente comiendo, Con cliente pagando');
         }
 
         parent::validarExistenciaEntidad('Mesa', 'MesaExiste', $parametros['codigo'], 'La mesa indicada no existe');

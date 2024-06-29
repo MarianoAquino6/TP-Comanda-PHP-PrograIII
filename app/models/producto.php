@@ -152,4 +152,42 @@ class Producto
             return null;
         }
     }
+
+    public function ProductoNoCorrespondeAUsuario($sectorUsuario)
+    {
+        $query = "SELECT tipo FROM productos WHERE codigo  = :codigoProducto";
+
+        $parametros = [':codigoProducto' => $this->_codigo];
+
+        $tipoProducto = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC)['tipo'];
+
+        switch ($sectorUsuario)
+        {
+            case "COCINERO":
+                if ($tipoProducto != "COMIDA")
+                {
+                    return true;
+                }
+
+                break;
+            case "CERVECERO":
+
+                if ($tipoProducto != "CERVEZA")
+                {
+                    return true;
+                }
+
+                break;
+            case "BARTENDER":
+
+                if ($tipoProducto != "TRAGO")
+                {
+                    return true;
+                }
+
+                break;
+        }
+
+        return false;
+    }
 }

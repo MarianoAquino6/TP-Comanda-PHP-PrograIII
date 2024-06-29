@@ -145,13 +145,14 @@ class Pedido
     public function DefinirFechaFinalizacion()
     {
         $query = "UPDATE pedidos 
-              SET fecha_finalizacion = :fecha_finalizacion,
-                  fecha_modificacion = :fecha_finalizacion
+              SET fecha_finalizacion = :fecha_finalizacion1,
+                  fecha_modificacion = :fecha_finalizacion2
               WHERE codigo = :codigoPedido";
 
         $parametros = [
             ':codigoPedido' => $this->_codigo,
-            ':fecha_finalizacion' => date('Y-m-d H:i:s')
+            ':fecha_finalizacion1' => date('Y-m-d H:i:s'),
+            ':fecha_finalizacion2' => date('Y-m-d H:i:s')
         ];
 
         // Ejecutar consulta y retornar resultado
@@ -204,7 +205,7 @@ class Pedido
 
     public static function ObtenerDatosNecesarioEncuesta($idPedido)
     {
-        $query = "SELECT p.id_mesa, p.id_mozo, GROUP_CONCAT(pp.id_usuario ORDER BY pp.id_usuario SEPARATOR ',') AS cocineros
+        $query = "SELECT p.id_mesa, p.id_mozo, GROUP_CONCAT(DISTINCT pp.id_usuario ORDER BY pp.id_usuario SEPARATOR ',') AS cocineros
                 FROM pedidos p
                 INNER JOIN pedidos_productos pp ON p.id = pp.id_pedido
                 INNER JOIN usuarios u ON pp.id_usuario = u.id

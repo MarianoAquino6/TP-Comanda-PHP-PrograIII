@@ -33,7 +33,13 @@ class MesaController
         try 
         {
             $mesaMasUsada = Mesa::ObtenerMesaMasUsada();
-            return $this->CrearRespuesta($response, array("mesaMasUsada" => $mesaMasUsada));
+
+            if ($mesaMasUsada != false)
+            {
+                return $this->CrearRespuesta($response, array("mesaMasUsada" => $mesaMasUsada));
+            }
+            
+            return $this->CrearRespuesta($response, array("eror" => "No se uso ninguna mesa"));
         } 
         catch (Exception $e) 
         {
@@ -59,6 +65,12 @@ class MesaController
         try 
         {
             $mesaMasUsada = Mesa::ObtenerMesaMayorFacturacion();
+
+            if ($mesaMasUsada == false)
+            {
+                return $this->CrearRespuesta($response, array("mesaMayorFacturacion" => "Aun no hay datos"));
+            }
+
             return $this->CrearRespuesta($response, array("mesaMayorFacturacion" => $mesaMasUsada));
         } 
         catch (Exception $e) 
@@ -85,6 +97,12 @@ class MesaController
         try 
         {
             $mesaMasUsada = Mesa::ObtenerMesaMayorImporte();
+
+            if ($mesaMasUsada == false)
+            {
+                return $this->CrearRespuesta($response, array("mesaMayorImporte" => "Aun no hay datos"));
+            }
+
             return $this->CrearRespuesta($response, array("mesaMayorImporte" => $mesaMasUsada));
         } 
         catch (Exception $e) 
@@ -115,15 +133,15 @@ class MesaController
             $fechaDesde = $parametros['fechaDesde'];
             $fechaHasta = $parametros['fechaHasta'];
 
-            $mesaMasUsada = Mesa::ObtenerFacturacionEnPeriodo($codigoMesa, $fechaDesde, $fechaHasta);
+            $facturacion = Mesa::ObtenerFacturacionEnPeriodo($codigoMesa, $fechaDesde, $fechaHasta);
 
-            if ($mesaMasUsada)
+            if ($facturacion)
             {
-                return $this->CrearRespuesta($response, array("facturacion" => $mesaMasUsada));
+                return $this->CrearRespuesta($response, array("facturacion de " . $codigoMesa  . " en el periodo indicado" => $facturacion));
             }
             else
             {
-                return $this->CrearRespuesta($response, array("facturacion" => "No existen pedidos correspondientes a la mesa para las fechas ingresadas"));
+                return $this->CrearRespuesta($response, array("facturacion de " . $codigoMesa  . "en el periodo indicado" => "No existen pedidos correspondientes a la mesa para las fechas ingresadas"));
             }
         } 
         catch (Exception $e) 
@@ -180,12 +198,18 @@ class MesaController
         }
     }
 
-    public function ObtenerMesasOrdenadasPorImporte($request, $response, $args)
+    public function ObtenerMesasOrdenadasPorImporteMenorMayor($request, $response, $args)
     {
         try 
         {
-            $mesaMasUsada = Mesa::ObtenerMesasOrdenadasPorImporte();
-            return $this->CrearRespuesta($response, array("mesasOrdenadasSegunImporte" => $mesaMasUsada));
+            $mesasOrdenadas = Mesa::ObtenerMesasOrdenadasPorImporteMaximoMenorMayor();
+
+            if ($mesasOrdenadas == false)
+            {
+                return $this->CrearRespuesta($response, array("mesasOrdenadasSegunImporte" => "Aun no hay importes"));
+            }
+
+            return $this->CrearRespuesta($response, array("mesasOrdenadasSegunImporte" => $mesasOrdenadas));
         } 
         catch (Exception $e) 
         {

@@ -46,7 +46,11 @@ class JWTMW
                 catch (Exception $e)
                 {
                     $response = new Response();
-                    $response->getBody()->write('Error al crear el token: ' . $e->getMessage());
+                    $errorData = [
+                        'error' => 'Internal Server Error',
+                        'message' => 'Error al crear el token: ' . $e->getMessage()
+                    ];
+                    $response->getBody()->write(json_encode($errorData));
                     return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
                 }
             }

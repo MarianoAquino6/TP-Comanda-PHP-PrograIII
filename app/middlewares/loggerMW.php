@@ -27,7 +27,11 @@ class LoggerMW
             catch (Exception $e)
             {
                 $response = new Response();
-                $response->getBody()->write('Error al guardar el log: ' . $e->getMessage());
+                $errorData = [
+                    'error' => 'Internal Server Error',
+                    'message' => 'Error al guardar el log: ' . $e->getMessage()
+                ];
+                $response->getBody()->write(json_encode($errorData));
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
             }
         }

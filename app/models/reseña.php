@@ -10,9 +10,10 @@ class Reseña
     private $_puntuacionCocinero;
     private $_puntuacionRestaurante;
     private $_experiencia;
+    private $_codigoPedido;
 
     public function __construct($idMesa, $puntuacionMesa, $idMozo, $puntuacionMozo, $idCocinero, $puntuacionCocinero, 
-    $puntuacionRestaurante, $experiencia)
+    $puntuacionRestaurante, $experiencia, $codigoPedido)
     {
         $this->_idMesa = $idMesa;
         $this->_puntuacionMesa = $puntuacionMesa;
@@ -22,6 +23,7 @@ class Reseña
         $this->_puntuacionCocinero = $puntuacionCocinero;
         $this->_puntuacionRestaurante = $puntuacionRestaurante;
         $this->_experiencia = $experiencia;
+        $this->_codigoPedido = $codigoPedido;
     }
 
     ///////////////////////////////////////////// CREATE ///////////////////////////////////////////////////////////
@@ -29,10 +31,11 @@ class Reseña
     public function Registrar()
     {
         $query = "INSERT INTO 
-                reseñas (id_mesa, puntuacion_mesa, id_mozo, puntuacion_mozo, id_cocinero, puntuacion_cocinero, puntuacion_restaurante, experiencia)
-                VALUES (:id_mesa, :puntuacion_mesa, :id_mozo, :puntuacion_mozo, :id_cocinero, :puntuacion_cocinero, :puntuacion_restaurante, :experiencia)";
+                reseñas (id_mesa, codigo_pedido, puntuacion_mesa, id_mozo, puntuacion_mozo, id_cocinero, puntuacion_cocinero, puntuacion_restaurante, experiencia)
+                VALUES (:id_mesa, :codigo_pedido, :puntuacion_mesa, :id_mozo, :puntuacion_mozo, :id_cocinero, :puntuacion_cocinero, :puntuacion_restaurante, :experiencia)";
         $parametros = [
             ':id_mesa' => $this->_idMesa,
+            'codigo_pedido' => $this->_codigoPedido,
             ':puntuacion_mesa' => $this->_puntuacionMesa,
             ':id_mozo' => $this->_idMozo,
             ':puntuacion_mozo' => $this->_puntuacionMozo,
@@ -49,11 +52,16 @@ class Reseña
 
     public static function ObtenerMejoresComentarios()
     {
-        $query = "SELECT experiencia FROM reseñas 
-                ORDER BY puntuacion_mesa DESC 
+        $query = "SELECT experiencia, 
+                    codigo_pedido,
+                        (puntuacion_mesa + puntuacion_mozo + puntuacion_cocinero + puntuacion_restaurante) / 4 AS promedio_puntuaciones
+                FROM reseñas 
+                ORDER BY promedio_puntuaciones DESC 
                 LIMIT 10";
 
-        return AccesoDatos::EjecutarConsultaSelect($query, [])->fetchAll(PDO::FETCH_ASSOC);
+        $resultados = AccesoDatos::EjecutarConsultaSelect($query, [])->fetchAll(PDO::FETCH_ASSOC);
+        
+        return $resultados;
     }
 
     public static function ObtenerMejoresComentariosDeMesa($codigoMesa)

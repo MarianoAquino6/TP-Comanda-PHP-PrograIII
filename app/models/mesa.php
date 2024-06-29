@@ -104,32 +104,28 @@ class Mesa
 
     public static function ObtenerMesaMasUsada()
     {
-        $query = "SELECT * FROM mesas 
-                WHERE id = (
-                    SELECT m.id 
-                    FROM mesas m
-                    INNER JOIN pedidos p ON m.id = p.id_mesa
-                    GROUP BY m.id
-                    ORDER BY COUNT(p.id) DESC
-                    LIMIT 1)";
+        $query = "SELECT m.*, COUNT(p.id) AS cantidad_pedidos
+                FROM mesas m
+                INNER JOIN pedidos p ON m.id = p.id_mesa
+                GROUP BY m.id
+                ORDER BY COUNT(p.id) DESC
+                LIMIT 1";
 
-        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, []);
         
         return $resultado->fetch(PDO::FETCH_ASSOC);
     }
 
     public static function ObtenerMesaMenosUsada()
     {
-        $query = "SELECT * FROM mesas 
-                WHERE id = (
-                    SELECT m.id 
-                    FROM mesas m
-                    LEFT JOIN pedidos p ON m.id = p.id_mesa
-                    GROUP BY m.id
-                    ORDER BY COALESCE(COUNT(p.id), 0) ASC
-                    LIMIT 1)";
+        $query = "SELECT m.*, COALESCE(COUNT(p.id), 0) AS cantidad_pedidos
+                FROM mesas m
+                LEFT JOIN pedidos p ON m.id = p.id_mesa
+                GROUP BY m.id
+                ORDER BY COALESCE(COUNT(p.id), 0) ASC
+                LIMIT 1";
 
-        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, []);
         
         return $resultado->fetch(PDO::FETCH_ASSOC);
     }
@@ -162,15 +158,19 @@ class Mesa
         return $resultado->fetch(PDO::FETCH_ASSOC);
     }
 
-    public static function ObtenerMesasOrdenadasPorImporte()
+    public static function ObtenerMesasOrdenadasPorImporteMaximoMenorMayor()
     {
-        $query = "SELECT m.codigo AS mesa, p.importe_total AS importe
+        $query = "SELECT m.codigo AS mesa, COALESCE(max_importe.importe_maximo, 0) AS importe_maximo
                 FROM mesas m
-                INNER JOIN pedidos p ON m.id = p.id_mesa
-                ORDER BY p.importe_total DESC";
+                LEFT JOIN (
+                    SELECT id_mesa, MAX(importe_total) AS importe_maximo
+                    FROM pedidos
+                    GROUP BY id_mesa
+                ) AS max_importe ON m.id = max_importe.id_mesa
+                ORDER BY importe_maximo ASC";
 
-        $resultado = AccesoDatos::EjecutarConsultaSelect($query, array());
-        
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, []);
+
         return $resultado->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -219,8 +219,18 @@ class Mesa
         );
 
         $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
-        
-        return $resultado->fetch(PDO::FETCH_ASSOC);
+
+        // Verificar si $resultado es false o no tiene filas
+        if ($resultado === false || $resultado->rowCount() == 0) 
+        {
+            return 0; // Otra acción o valor predeterminado según el caso
+        }
+
+        // Obtener el importe total
+        $importeTotal = $resultado->fetch(PDO::FETCH_ASSOC)['importe'];
+
+        // Si $importeTotal es null (puede ocurrir si no hay registros), retornar 0
+        return $importeTotal !== null ? $importeTotal : 0;
     }
 
     public static function MesaExiste($codigo)

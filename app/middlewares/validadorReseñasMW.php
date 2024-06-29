@@ -39,8 +39,12 @@ class ValidadorReseñasMW
         catch (Exception $e)
         {
             $response = new Response();
-            $response->getBody()->write($e->getMessage());
-            return $response->withStatus(400);
+            $errorData = [
+                'error' => 'Error de validación',
+                'message' => $e->getMessage()
+            ];
+            $response->getBody()->write(json_encode($errorData));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
         return $response;

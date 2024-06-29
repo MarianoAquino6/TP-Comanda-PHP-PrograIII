@@ -185,7 +185,7 @@ class PedidoProducto
 
     public static function ObtenerPedidosTomadosEmpleado($idEmpleado)
     {
-        $query = "SELECT me.codigo AS codigo_mesa, pe.codigo AS codigo_pedido, pr.nombre AS producto FROM pedidos_productos pp
+        $query = "SELECT me.codigo AS codigo_mesa, pe.codigo AS codigo_pedido, pr.nombre AS producto, pr.codigo AS codigo_producto FROM pedidos_productos pp
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
@@ -215,20 +215,21 @@ class PedidoProducto
         return AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+
     public static function ObtenerPedidosConEstados()
     {
-        $query = "SELECT me.codigo AS mesa, me.estado AS estado_mesa, pe.codigo AS pedido, 
-            pr.nombre AS producto, pp.estado AS estado_producto, pp.tiempo_estimado AS tiempo_estimado FROM pedidos_productos pp
-                INNER JOIN productos pr ON pp.id_producto = pr.id
-                INNER JOIN pedidos pe ON pp.id_pedido = pe.id
-                INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE me.estado != 'Cerrada' AND pe.vigente = 1";
-    
+        $query = "SELECT me.codigo AS mesa, me.estado AS estado_mesa, pe.codigo AS pedido, pe.tiempo_total_estimado AS tiempo_total_estimado,
+                pr.nombre AS producto, pp.estado AS estado_producto, pp.tiempo_estimado AS tiempo_estimado FROM pedidos_productos pp
+                    INNER JOIN productos pr ON pp.id_producto = pr.id
+                    INNER JOIN pedidos pe ON pp.id_pedido = pe.id
+                    INNER JOIN mesas me ON pe.id_mesa = me.id
+                    WHERE me.estado != 'Cerrada' AND pe.vigente = 1";
+        
         $parametros = [];
 
         $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros);
 
-        //Armo el array para que sea mas lindo
+        // Armo el array para que sea más lindo
         return self::ConstruirArrayPedidos($resultado->fetchAll(PDO::FETCH_ASSOC));
     }
 
@@ -239,10 +240,12 @@ class PedidoProducto
         foreach ($resultados as $fila) 
         {
             $mesaCodigo = $fila['mesa'];
+            $pedidoCodigo = $fila['pedido'];
+            $tiempoTotalEstimado = $fila['tiempo_total_estimado'];
 
             require_once './models/pedido.php';
 
-            $tiempoRestante = Pedido::ObtenerTiempoRestante($mesaCodigo, $fila['pedido']);
+            $tiempoRestante = Pedido::ObtenerTiempoRestante($mesaCodigo, $pedidoCodigo);
 
             // Inicializa la mesa si no existe
             if (!isset($pedidos[$mesaCodigo])) 
@@ -250,8 +253,11 @@ class PedidoProducto
                 $pedidos[$mesaCodigo] = [
                     'mesa' => $mesaCodigo,
                     'estado_mesa' => $fila['estado_mesa'],
-                    'pedido' => $fila['pedido'],
-                    'tiempo_restante' => ($tiempoRestante !== false) ? $tiempoRestante : 0,
+                    'pedido' => $pedidoCodigo,
+                    'tiempo_total_estimado' => ($tiempoTotalEstimado !== null) ? $tiempoTotalEstimado : "Aun no definido",
+                    'tiempo_restante' => ($tiempoRestante !== false) ? 
+                        ($tiempoRestante >= 0 ? $tiempoRestante : "Lleva demorado " . abs($tiempoRestante) . " minutos") : 
+                        "Aun no definido",
                     'productos_ordenados' => []
                 ];
             }
@@ -264,7 +270,7 @@ class PedidoProducto
             ];
         }
 
-        // Convierta el array asociativo en un array indexado
+        // Convierte el array asociativo en un array indexado
         return array_values($pedidos);
     }
 
@@ -447,5 +453,21 @@ class PedidoProducto
         {
             return false; // No todos los productos están listos
         }
+    }
+
+    public static function PedidoTomadoNoCorrespondeAlUsuario($idUsuario, $idProducto)
+    {
+        $query = "SELECT * FROM pedidos_productos WHERE id_usuario = :id_usuario AND id_producto = :id_producto AND estado = :preparacion";
+    
+        $parametros = [
+            ':id_usuario' => $idUsuario,
+            ':id_producto' => $idProducto,
+            ':preparacion' => self::ESTADO_EN_PREPARACION
+        ];
+    
+        $resultado = AccesoDatos::EjecutarConsultaSelect($query, $parametros)->fetch(PDO::FETCH_ASSOC);
+    
+        // Devuelvo true si NO ENCUENTRA UN RESULTADO y false si lo encuentra
+        return $resultado === false;
     }
 }

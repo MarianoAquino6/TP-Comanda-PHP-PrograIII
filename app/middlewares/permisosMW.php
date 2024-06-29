@@ -39,7 +39,11 @@ class PermisosMW
         catch (Exception $e)
         {
             $response = new Response();
-            $response->getBody()->write($e->getMessage());
+            $errorData = [
+                'error' => 'Forbidden',
+                'message' => $e->getMessage()
+            ];
+            $response->getBody()->write(json_encode($errorData));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
