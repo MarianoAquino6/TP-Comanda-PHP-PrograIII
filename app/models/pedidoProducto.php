@@ -277,12 +277,12 @@ class PedidoProducto
     public static function ObtenerPedidosDemorados()
     {
         $query = "SELECT me.codigo AS mesa, pe.codigo AS pedido, pr.nombre AS producto, 
-                FLOOR(TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) / 60) AS minutos_demorados
+                (CEIL(TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) / 60) - pp.tiempo_estimado) AS minutos_demorados
                 FROM pedidos_productos pp
                 INNER JOIN productos pr ON pp.id_producto = pr.id
                 INNER JOIN pedidos pe ON pp.id_pedido = pe.id
                 INNER JOIN mesas me ON pe.id_mesa = me.id
-                WHERE pp.estado != :estado AND (TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) > pp.tiempo_estimado)";
+                WHERE pp.estado != :estado AND (TIME_TO_SEC(TIMEDIFF(pp.hora_fin, pp.hora_inicio)) / 60) > pp.tiempo_estimado";
     
         $parametros = [
             ':estado' => self::ESTADO_CANCELADO

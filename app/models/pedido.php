@@ -261,7 +261,7 @@ class Pedido
     public static function ObtenerPedidosDemorados()
     {
         $query = "SELECT 
-                (TIME_TO_SEC(TIMEDIFF(p.fecha_finalizacion, p.fecha_creacion)) / 60) AS minutos_demorados,
+                ((TIME_TO_SEC(TIMEDIFF(p.fecha_finalizacion, p.fecha_creacion)) / 60) - p.tiempo_total_estimado) AS minutos_demorados,
                 p.codigo,
                 p.nombre_cliente,
                 m.codigo AS codigo_mesa,
